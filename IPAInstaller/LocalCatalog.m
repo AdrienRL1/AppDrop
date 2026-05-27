@@ -1,4 +1,5 @@
 #import "LocalCatalog.h"
+#import "Localization.h"
 #import <sqlite3.h>
 
 // SQLite-backed catalog: bundled catalog.db in the IPA contains:
@@ -71,7 +72,7 @@
             return;
         }
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (progressBlock) progressBlock(@"Ouverture du catalogue...");
+            if (progressBlock) progressBlock(T(@"catalog.loading"));
         });
 
         // Bundled DB lives in Resources/catalog.db — read-only, mmap-backed.

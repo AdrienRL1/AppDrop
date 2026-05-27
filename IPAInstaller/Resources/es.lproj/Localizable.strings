@@ -1,6 +1,12 @@
 /* AppDrop — Español */
 
 "tab.catalog" = "Catálogo";
+"tab.search" = "Buscar";
+"search.placeholder" = "Buscar 157.000 apps clásicas...";
+"search.hint_empty" = "Escribe para buscar en el catálogo";
+"search.searching" = "Buscando...";
+"search.no_results" = "Sin resultados";
+"search.results_count" = "%lu / %ld resultados";
 "tab.ai" = "IA";
 "tab.install" = "Instalar";
 "tab.settings" = "Ajustes";
@@ -20,6 +26,7 @@
 
 "chat.title" = "Chat IA";
 "chat.placeholder" = "Haz tu pregunta...";
+"chat.tap_to_install" = "Toca para instalar";
 "chat.send" = "Enviar";
 
 "app.install" = "Instalar";

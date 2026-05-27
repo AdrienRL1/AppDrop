@@ -43,6 +43,10 @@
     UITabBarController *tabs = [[UITabBarController alloc] init];
     tabs.viewControllers = @[catalogNav, chatNav, installNav, settingsNav];
     tabs.selectedIndex = 0;  // Catalogue first (it's the main feature)
+    // Note: the Search VC is no longer a tab. It's pushed onto the Catalog
+    // nav stack via the Search button next to Filters / Select / Refresh.
+    // Keeps the tab bar uncluttered and lets Search inherit the catalog's
+    // current filter naturally.
     self.window.rootViewController = tabs;
     [self.window makeKeyAndVisible];
 

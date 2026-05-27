@@ -625,7 +625,7 @@
     [card addSubview:sub];
 
     UILabel *cta = [[UILabel alloc] initWithFrame:CGRectMake(textX, 45, textW, 16)];
-    cta.text = @"Tappez pour installer";
+    cta.text = T(@"chat.tap_to_install");
     cta.font = [UIFont boldSystemFontOfSize:11];
     cta.textColor = [IOS6Theme primaryBlue];
     cta.backgroundColor = [UIColor clearColor];

@@ -2,6 +2,12 @@
 
 /* ===== Tab bar ===== */
 "tab.catalog" = "Catalogue";
+"tab.search" = "Recherche";
+"search.placeholder" = "Rechercher 157 000 apps vintage...";
+"search.hint_empty" = "Tape pour chercher dans le catalogue";
+"search.searching" = "Recherche...";
+"search.no_results" = "Aucune app correspondante";
+"search.results_count" = "%lu / %ld résultats";
 "tab.ai" = "IA";
 "tab.install" = "Installer";
 "tab.settings" = "Réglages";
@@ -23,6 +29,7 @@
 /* ===== AI Chat screen ===== */
 "chat.title" = "Chat IA";
 "chat.placeholder" = "Posez votre question...";
+"chat.tap_to_install" = "Tappez pour installer";
 "chat.send" = "Envoyer";
 
 /* ===== App detail screen ===== */

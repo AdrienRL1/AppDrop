@@ -1,6 +1,12 @@
 /* AppDrop — Deutsch */
 
 "tab.catalog" = "Katalog";
+"tab.search" = "Suche";
+"search.placeholder" = "157.000 alte Apps durchsuchen...";
+"search.hint_empty" = "Tippen, um den Katalog zu durchsuchen";
+"search.searching" = "Suchen...";
+"search.no_results" = "Keine passenden Apps gefunden";
+"search.results_count" = "%lu / %ld Treffer";
 "tab.ai" = "KI";
 "tab.install" = "Installieren";
 "tab.settings" = "Einstellungen";
@@ -20,6 +26,7 @@
 
 "chat.title" = "KI-Chat";
 "chat.placeholder" = "Stellen Sie Ihre Frage...";
+"chat.tap_to_install" = "Tippen zum Installieren";
 "chat.send" = "Senden";
 
 "app.install" = "Installieren";

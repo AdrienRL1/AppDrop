@@ -1,6 +1,12 @@
 /* AppDrop — 简体中文 */
 
 "tab.catalog" = "目录";
+"tab.search" = "搜索";
+"search.placeholder" = "搜索 157,000 个老应用...";
+"search.hint_empty" = "输入以搜索目录";
+"search.searching" = "搜索中...";
+"search.no_results" = "未找到匹配应用";
+"search.results_count" = "%lu / %ld 个结果";
 "tab.ai" = "AI";
 "tab.install" = "安装";
 "tab.settings" = "设置";
@@ -20,6 +26,7 @@
 
 "chat.title" = "AI 聊天";
 "chat.placeholder" = "请输入您的问题...";
+"chat.tap_to_install" = "点击安装";
 "chat.send" = "发送";
 
 "app.install" = "安装";

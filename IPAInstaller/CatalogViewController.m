@@ -9,6 +9,7 @@
 #import "IOS6Theme.h"
 #import "LocalCatalog.h"
 #import "CatalogAppCell.h"
+#import "SearchViewController.h"
 
 static const CGFloat kIconSize = 44;
 static const CGFloat kSelectionToolbarHeight = 44;
@@ -21,7 +22,6 @@ static inline BOOL kIsIPad(void) {
 }
 
 @interface CatalogViewController () <FilterViewControllerDelegate, UIAlertViewDelegate>
-@property (nonatomic, strong) UISearchBar *searchBar;
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UIActivityIndicatorView *spinner;
 @property (nonatomic, strong) UILabel *statusLabel;
@@ -71,20 +71,12 @@ static inline BOOL kIsIPad(void) {
 - (void)buildUI {
     CGFloat w = self.view.bounds.size.width;
 
-    // Header = just the search bar. The old "iOS … → 6.1.3 • unique • tri:nom"
-    // filter breadcrumb was removed in v2.0.23: the user can see what's filtered
-    // by tapping into the Filters screen, and the line just ate vertical space.
-    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, w, 44)];
-    self.searchBar.placeholder = T(@"catalog.search_placeholder");
-    self.searchBar.autocapitalizationType = UITextAutocapitalizationTypeNone;
-    self.searchBar.delegate = self;
-    self.searchBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-
+    // v1.1: the catalog search bar moved to its own dedicated Search tab in the
+    // tab bar. This screen is now just the catalog grid + filter / select / refresh.
     self.tableView = [[UITableView alloc] initWithFrame:self.view.bounds
                                                    style:UITableViewStylePlain];
     self.tableView.dataSource = self;
     self.tableView.delegate = self;
-    self.tableView.tableHeaderView = self.searchBar;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     // iPhone: 76 — 2-line subtitle (meta + filename).
     self.tableView.rowHeight = kIsIPad() ? 170 : 76;
@@ -139,12 +131,24 @@ static inline BOOL kIsIPad(void) {
             initWithTitle:T(@"catalog.select")
                     style:UIBarButtonItemStyleBordered
                    target:self action:@selector(enterSelectionMode)];
+        // Search button uses the same magnifying-glass system item as the
+        // standard iOS search icon. Pushes SearchViewController onto the
+        // catalog's nav stack; the search VC reads CatalogFilter.load_ so
+        // current filters are naturally inherited.
+        UIBarButtonItem *searchBtn = [[UIBarButtonItem alloc]
+            initWithBarButtonSystemItem:UIBarButtonSystemItemSearch
+                                 target:self action:@selector(searchTapped)];
         UIBarButtonItem *refreshBtn = [[UIBarButtonItem alloc]
             initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
                                  target:self action:@selector(performSearch)];
-        // Order is rightmost first: [filters, select, refresh].
-        self.navigationItem.rightBarButtonItems = @[filtersBtn, selectBtn, refreshBtn];
+        // Order is rightmost first: [filters, search, select, refresh].
+        self.navigationItem.rightBarButtonItems = @[filtersBtn, searchBtn, selectBtn, refreshBtn];
     }
+}
+
+- (void)searchTapped {
+    SearchViewController *svc = [[SearchViewController alloc] init];
+    [self.navigationController pushViewController:svc animated:YES];
 }
 
 #pragma mark - Filters
@@ -285,36 +289,9 @@ static inline BOOL kIsIPad(void) {
     }];
 }
 
-#pragma mark - UISearchBarDelegate
-
-- (void)searchBar:(UISearchBar *)sb textDidChange:(NSString *)text {
-    self.currentQuery = text ?: @"";
-    [NSObject cancelPreviousPerformRequestsWithTarget:self
-                                             selector:@selector(performSearch)
-                                               object:nil];
-    [self performSelector:@selector(performSearch) withObject:nil afterDelay:0.4];
-}
-
-- (void)searchBarTextDidBeginEditing:(UISearchBar *)sb {
-    [sb setShowsCancelButton:YES animated:YES];
-}
-
-- (void)searchBarTextDidEndEditing:(UISearchBar *)sb {
-    [sb setShowsCancelButton:NO animated:YES];
-}
-
-- (void)searchBarCancelButtonClicked:(UISearchBar *)sb {
-    sb.text = @"";
-    self.currentQuery = @"";
-    [sb resignFirstResponder];
-    [self performSearch];
-}
-
-- (void)searchBarSearchButtonClicked:(UISearchBar *)sb {
-    [sb resignFirstResponder];
-    self.currentQuery = sb.text ?: @"";
-    [self performSearch];
-}
+// v1.1: UISearchBarDelegate methods removed — search now lives in its own
+// SearchViewController tab. CatalogVC's currentQuery is always @"" (the
+// LocalCatalog query path still accepts it and returns the unfiltered list).
 
 #pragma mark - Selection mode
 
@@ -556,9 +533,6 @@ static inline BOOL kIsIPad(void) {
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)sv {
     [[IconLoader shared] suspend];
-    if ([self.searchBar isFirstResponder]) {
-        [self.searchBar resignFirstResponder];
-    }
 }
 
 - (void)scrollViewDidEndDragging:(UIScrollView *)sv willDecelerate:(BOOL)decel {
@@ -571,7 +545,7 @@ static inline BOOL kIsIPad(void) {
 
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)ip {
     [tv deselectRowAtIndexPath:ip animated:YES];
-    if ([self.searchBar isFirstResponder]) [self.searchBar resignFirstResponder];
+    
     if (kIsIPad()) return;  // taps on iPad handled by AppTileView's onTap
     if (ip.row >= (NSInteger)self.results.count) return;
     NSDictionary *app = self.results[ip.row];

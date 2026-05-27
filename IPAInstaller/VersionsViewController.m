@@ -53,7 +53,7 @@
 
 - (void)loadVersions {
     [self.spinner startAnimating];
-    self.statusLabel.text = @"Chargement...";
+    self.statusLabel.text = T(@"catalog.loading_more");
 
     if ([[InstallManager shared] autonomousMode]) {
         if (![[LocalCatalog shared] isReady]) {
