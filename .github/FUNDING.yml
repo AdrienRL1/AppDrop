@@ -4,7 +4,4 @@
 # PayPal isn't a built-in FUNDING.yml platform on GitHub — the supported list
 # is github/patreon/open_collective/ko_fi/liberapay/buy_me_a_coffee/etc. To
 # route donations to PayPal we use the `custom:` key with the PayPal.Me URL.
-#
-# Donors can pick "Send to a friend" on PayPal for a fee-free transfer
-# (CAD → CAD domestic), or "Goods or services" (~3% PayPal fee).
 custom: https://paypal.me/adrienrl1

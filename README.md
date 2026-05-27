@@ -8,8 +8,6 @@
 
 <p align="center">
   <a href="https://paypal.me/adrienrl1"><b>💖 Like AppDrop? Tip the dev on PayPal</b></a>
-  <br>
-  <sub>(pick "Send to a friend" to skip the PayPal fee)</sub>
 </p>
 
 <p align="center">
