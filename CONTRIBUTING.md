@@ -4,9 +4,9 @@ Thanks for your interest! AppDrop is a small native iOS 6+ jailbreak app — con
 
 ## How I work on this project
 
-AppDrop is a personal project I maintain in my spare time. I'm not a professional Objective-C / iOS developer — I built it with extensive AI assistance and a lot of testing on a real iPad 4. That means:
+AppDrop is a personal project I maintain in my spare time. I'm not a professional Objective-C / iOS developer. That means:
 
-- **I read every PR carefully** before merging. AI-assisted review included.
+- **I read every PR carefully** before merging.
 - **I won't merge things I don't understand.** If you submit something complex, please explain *what* it does and *why* in the PR description.
 - **Response time is on a hobby schedule.** Days, sometimes a week. Sorry, that's the deal.
 
