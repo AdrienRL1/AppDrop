@@ -114,6 +114,14 @@
 "install.error.5xx_generic" = "Error del servidor HTTP %ld";
 "install.error.http_generic" = "HTTP %ld";
 "install.error.network" = "Fallo de red";
+"unit.b" = "B";
+"unit.kb" = "KB";
+"unit.mb" = "MB";
+"unit.gb" = "GB";
+"install.modern_ios_msg" = "Esta versión de iOS no admite ipainstaller. El .ipa se guardó en:\n%@\nÁbrelo en Filza o iFile para instalarlo manualmente.";
+"install.kept_after_fail" = "Instalación fallida. El .ipa se conservó en:\n%@\nPuedes instalarlo manualmente con Filza o iFile.";
+"install.state.saved_for_manual" = "Guardado (abrir en Filza)";
+"chat.llm_unavailable" = "Servicio de IA no disponible. Pollinations.ai puede estar temporalmente fuera de línea — inténtalo de nuevo en unos minutos.";
 "install.error.no_ipainstaller" = "ipainstaller no encontrado. Instala el paquete « IPA Installer Console » desde Cydia/Sileo (busca: appinst o ipainstaller).";
 "install.error.spawn_failed" = "posix_spawn(%s) falló: %s";
 "install.error.install_failed" = "Instalación fallida (salida %d): %@";
@@ -172,3 +180,33 @@
 "onboarding.catalog_quality_msg" = "El catálogo upstream tiene una pequeña fracción de apps con título o icono incorrectos — esto está fuera de nuestro control (problema de datos en stuffed18.github.io, no en la app). El nombre del archivo .ipa que aparece bajo cada app es lo que se instalará realmente. Verifica antes de instalar si la app es la que quieres.";
 "common.understood" = "Entendido";
 "filter.footer.sort" = "Pulsa de nuevo la opción seleccionada para alternar entre ascendente y descendente.";
+
+/* ===== v1.2 — Mirror retry on slow download ===== */
+"install.state.retrying_mirror" = "Mirror lento — reintentando (%d/%d)…";
+
+/* ===== v1.2 build 8 — Pre-install FairPlay encryption check ===== */
+"install.error.fairplay" = "Este .ipa sigue cifrado con FairPlay — vinculado al Apple ID que lo compró en la App Store, por lo que no funcionará en tu dispositivo. Prueba con otro mirror de la lista de Versiones (el catálogo suele tener varias fuentes para la misma app).";
+
+/* ===== v1.2 build 9 — Parallel chunked downloads ===== */
+"settings.section_download" = "Descarga";
+"settings.parallel_streams" = "Streams paralelos";
+"settings.parallel_streams_footer" = "archive.org limita la velocidad por conexión TCP. Dividir una descarga en varios fragmentos paralelos (cada uno con su propia conexión) puede dar 3-4× la velocidad. 4 es el punto óptimo habitual — más allá rara vez ayuda y puede provocar que todo se ralentice. Pon 1 para desactivarlo.";
+"settings.streams_off" = "1 (un solo stream)";
+"settings.streams_n" = "%ld streams paralelos";
+
+/* ===== v1.2 build 9 — Mensajes de error de descarga (antes hardcodeados) ===== */
+"install.error.open_final" = "No se pudo crear el archivo .ipa final (¿disco lleno o restricción de sandbox?)";
+"install.error.open_chunk" = "No se pudo leer el archivo del fragmento %@";
+"install.error.concat_write" = "La escritura falló al reensamblar los fragmentos (¿disco lleno?)";
+"install.error.no_headers" = "No se recibieron headers HTTP del servidor";
+"install.error.redirect_no_location" = "Redirección HTTP %ld sin header Location";
+
+/* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
+"settings.section_archive" = "Cuenta archive.org";
+"settings.section_archive_footer" = "Opcional. Inicia sesión con tu cuenta de archive.org para reducir potencialmente la limitación por IP en las descargas. Obtén tus claves S3 en: archive.org/account/s3.php";
+"settings.archive_email" = "Correo electrónico";
+"settings.archive_access_key" = "Clave de acceso (Access Key)";
+"settings.archive_secret_key" = "Clave secreta (Secret Key)";
+"settings.archive_not_set" = "Sin definir";
+"settings.archive_help" = "Obtén tus claves en archive.org/account/s3.php. Deja vacío para borrar.";
+"settings.archive_save" = "Guardar";

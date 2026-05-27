@@ -114,6 +114,14 @@
 "install.error.5xx_generic" = "服务器错误 HTTP %ld";
 "install.error.http_generic" = "HTTP %ld";
 "install.error.network" = "网络故障";
+"unit.b" = "B";
+"unit.kb" = "KB";
+"unit.mb" = "MB";
+"unit.gb" = "GB";
+"install.modern_ios_msg" = "此 iOS 版本不支持 ipainstaller。.ipa 已保存至:\n%@\n请用 Filza 或 iFile 打开以手动安装。";
+"install.kept_after_fail" = "安装失败。.ipa 已保留在:\n%@\n你可以通过 Filza 或 iFile 手动安装。";
+"install.state.saved_for_manual" = "已保存(用 Filza 打开)";
+"chat.llm_unavailable" = "AI 服务不可用。Pollinations.ai 可能暂时离线 — 请几分钟后重试。";
 "install.error.no_ipainstaller" = "找不到 ipainstaller。请从 Cydia/Sileo 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。";
 "install.error.spawn_failed" = "posix_spawn(%s) 失败: %s";
 "install.error.install_failed" = "安装失败 (exit %d): %@";
@@ -172,3 +180,33 @@
 "onboarding.catalog_quality_msg" = "上游目录中有少量应用的标题或图标不正确 — 这不在我们的控制范围内 (是 stuffed18.github.io 的数据问题，并非应用的问题)。每个应用下方显示的 .ipa 文件名才是实际将要安装的内容。安装前请再次核对是否为你想要的应用。";
 "common.understood" = "知道了";
 "filter.footer.sort" = "再次点按已选中的选项，可在升序 / 降序之间切换。";
+
+/* ===== v1.2 — Mirror retry on slow download ===== */
+"install.state.retrying_mirror" = "镜像缓慢 — 重试中 (%d/%d)…";
+
+/* ===== v1.2 build 8 — Pre-install FairPlay encryption check ===== */
+"install.error.fairplay" = "此 .ipa 仍受 FairPlay 加密保护 — 绑定到在 App Store 购买它的 Apple ID，因此无法在你的设备上运行。请从「版本」列表中尝试其他镜像 (目录中同一个应用通常有多个来源)。";
+
+/* ===== v1.2 build 9 — Parallel chunked downloads ===== */
+"settings.section_download" = "下载";
+"settings.parallel_streams" = "并行流";
+"settings.parallel_streams_footer" = "archive.org 按 TCP 连接限速。将下载分成多个并行块 (每块拥有自己的连接) 通常可获得 3-4× 的速度。4 是常见的最佳点 — 更高很少有帮助，反而可能让所有流一起被限速。设为 1 可禁用。";
+"settings.streams_off" = "1 (单流)";
+"settings.streams_n" = "%ld 个并行流";
+
+/* ===== v1.2 build 9 — 下载错误信息 (此前为硬编码) ===== */
+"install.error.open_final" = "无法创建最终的 .ipa 文件 (磁盘已满或沙盒限制？)";
+"install.error.open_chunk" = "无法读取分块文件 %@";
+"install.error.concat_write" = "在重组分块时写入失败 (磁盘已满？)";
+"install.error.no_headers" = "未从服务器收到 HTTP 头";
+"install.error.redirect_no_location" = "HTTP %ld 重定向缺少 Location 头";
+
+/* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
+"settings.section_archive" = "Archive.org 账户";
+"settings.section_archive_footer" = "可选。使用你的 archive.org 账户登录，可能会减少下载时的按 IP 限速。获取 S3 密钥地址: archive.org/account/s3.php";
+"settings.archive_email" = "邮箱";
+"settings.archive_access_key" = "访问密钥 (Access Key)";
+"settings.archive_secret_key" = "私密密钥 (Secret Key)";
+"settings.archive_not_set" = "未设置";
+"settings.archive_help" = "在 archive.org/account/s3.php 获取你的密钥。留空可清除。";
+"settings.archive_save" = "保存";

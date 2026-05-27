@@ -9,7 +9,6 @@
 #import "IOS6Theme.h"
 #import "LocalCatalog.h"
 #import "CatalogAppCell.h"
-#import "SearchViewController.h"
 
 static const CGFloat kIconSize = 44;
 static const CGFloat kSelectionToolbarHeight = 44;
@@ -131,24 +130,12 @@ static inline BOOL kIsIPad(void) {
             initWithTitle:T(@"catalog.select")
                     style:UIBarButtonItemStyleBordered
                    target:self action:@selector(enterSelectionMode)];
-        // Search button uses the same magnifying-glass system item as the
-        // standard iOS search icon. Pushes SearchViewController onto the
-        // catalog's nav stack; the search VC reads CatalogFilter.load_ so
-        // current filters are naturally inherited.
-        UIBarButtonItem *searchBtn = [[UIBarButtonItem alloc]
-            initWithBarButtonSystemItem:UIBarButtonSystemItemSearch
-                                 target:self action:@selector(searchTapped)];
         UIBarButtonItem *refreshBtn = [[UIBarButtonItem alloc]
             initWithBarButtonSystemItem:UIBarButtonSystemItemRefresh
                                  target:self action:@selector(performSearch)];
-        // Order is rightmost first: [filters, search, select, refresh].
-        self.navigationItem.rightBarButtonItems = @[filtersBtn, searchBtn, selectBtn, refreshBtn];
+        // Order is rightmost first: [filters, select, refresh].
+        self.navigationItem.rightBarButtonItems = @[filtersBtn, selectBtn, refreshBtn];
     }
-}
-
-- (void)searchTapped {
-    SearchViewController *svc = [[SearchViewController alloc] init];
-    [self.navigationController pushViewController:svc animated:YES];
 }
 
 #pragma mark - Filters
@@ -422,10 +409,10 @@ static inline BOOL kIsIPad(void) {
 }
 
 - (NSString *)humanSize:(long long)bytes {
-    if (bytes < 1024) return [NSString stringWithFormat:@"%lld o", bytes];
-    if (bytes < 1024*1024) return [NSString stringWithFormat:@"%.0f Ko", bytes/1024.0];
-    if (bytes < 1024LL*1024*1024) return [NSString stringWithFormat:@"%.1f Mo", bytes/(1024.0*1024)];
-    return [NSString stringWithFormat:@"%.2f Go", bytes/(1024.0*1024*1024)];
+    if (bytes < 1024) return [NSString stringWithFormat:@"%lld %@", bytes, T(@"unit.b")];
+    if (bytes < 1024*1024) return [NSString stringWithFormat:@"%.0f %@", bytes/1024.0, T(@"unit.kb")];
+    if (bytes < 1024LL*1024*1024) return [NSString stringWithFormat:@"%.1f %@", bytes/(1024.0*1024), T(@"unit.mb")];
+    return [NSString stringWithFormat:@"%.2f %@", bytes/(1024.0*1024*1024), T(@"unit.gb")];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)ip {

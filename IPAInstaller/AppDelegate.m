@@ -3,6 +3,7 @@
 #import "IOS6Theme.h"
 #import "InstallManager.h"
 #import "CatalogViewController.h"
+#import "SearchViewController.h"
 #import "ChatViewController.h"
 #import "SettingsViewController.h"
 #import "Localization.h"
@@ -22,31 +23,33 @@
                                                             image:[UIImage imageNamed:@"tab-catalog"]
                                                               tag:0];
 
+    SearchViewController *search = [[SearchViewController alloc] init];
+    UINavigationController *searchNav = [[UINavigationController alloc] initWithRootViewController:search];
+    searchNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.search")
+                                                          image:[UIImage imageNamed:@"tab-search"]
+                                                            tag:1];
+
     ChatViewController *chat = [[ChatViewController alloc] init];
     UINavigationController *chatNav = [[UINavigationController alloc] initWithRootViewController:chat];
     chatNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.ai")
                                                        image:[UIImage imageNamed:@"tab-ai"]
-                                                         tag:1];
+                                                         tag:2];
 
     RootViewController *install = [[RootViewController alloc] init];  // legacy URL/jobs screen
     UINavigationController *installNav = [[UINavigationController alloc] initWithRootViewController:install];
     installNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.install")
                                                           image:[UIImage imageNamed:@"tab-install"]
-                                                            tag:2];
+                                                            tag:3];
 
     SettingsViewController *settings = [[SettingsViewController alloc] init];
     UINavigationController *settingsNav = [[UINavigationController alloc] initWithRootViewController:settings];
     settingsNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.settings")
                                                            image:[UIImage imageNamed:@"tab-settings"]
-                                                             tag:3];
+                                                             tag:4];
 
     UITabBarController *tabs = [[UITabBarController alloc] init];
-    tabs.viewControllers = @[catalogNav, chatNav, installNav, settingsNav];
+    tabs.viewControllers = @[catalogNav, searchNav, chatNav, installNav, settingsNav];
     tabs.selectedIndex = 0;  // Catalogue first (it's the main feature)
-    // Note: the Search VC is no longer a tab. It's pushed onto the Catalog
-    // nav stack via the Search button next to Filters / Select / Refresh.
-    // Keeps the tab bar uncluttered and lets Search inherit the catalog's
-    // current filter naturally.
     self.window.rootViewController = tabs;
     [self.window makeKeyAndVisible];
 

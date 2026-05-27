@@ -171,10 +171,10 @@ static const NSInteger kPageLimit = 50;
 }
 
 - (NSString *)humanSize:(long long)bytes {
-    if (bytes < 1024) return [NSString stringWithFormat:@"%lld o", bytes];
-    if (bytes < 1024*1024) return [NSString stringWithFormat:@"%.0f Ko", bytes/1024.0];
-    if (bytes < 1024LL*1024*1024) return [NSString stringWithFormat:@"%.1f Mo", bytes/(1024.0*1024)];
-    return [NSString stringWithFormat:@"%.2f Go", bytes/(1024.0*1024*1024)];
+    if (bytes < 1024) return [NSString stringWithFormat:@"%lld %@", bytes, T(@"unit.b")];
+    if (bytes < 1024*1024) return [NSString stringWithFormat:@"%.0f %@", bytes/1024.0, T(@"unit.kb")];
+    if (bytes < 1024LL*1024*1024) return [NSString stringWithFormat:@"%.1f %@", bytes/(1024.0*1024), T(@"unit.mb")];
+    return [NSString stringWithFormat:@"%.2f %@", bytes/(1024.0*1024*1024), T(@"unit.gb")];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)ip {

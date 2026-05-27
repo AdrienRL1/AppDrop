@@ -427,6 +427,103 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
               progress:progressBlock completion:completion];
 }
 
++ (void)downloadChunk:(NSString *)url
+              fromByte:(long long)startByte
+                toByte:(long long)endByte
+                toFile:(NSString *)chunkPath
+           isCancelled:(BOOL (^)(void))isCancelled
+              progress:(void (^)(long long, long long))progressBlock
+            completion:(void (^)(BOOL, NSInteger, NSError *))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Same archive.org HTTPS→HTTP front-end downgrade as downloadURL:
+        NSString *effectiveURL = url;
+        if ([url hasPrefix:@"https://"]
+            && ([url rangeOfString:@"archive.org"].location != NSNotFound)) {
+            effectiveURL = [@"http://" stringByAppendingString:[url substringFromIndex:8]];
+        }
+        NSInteger status = 0;
+        NSError *err = nil;
+        BOOL ok = NO;
+        // Retry on transient server errors. Partial chunk file survives between
+        // attempts and downloadSync resumes via Range: bytes=N-end.
+        for (int attempt = 0; attempt < 4; attempt++) {
+            if (isCancelled && isCancelled()) {
+                err = mkErr(99, T(@"common.cancelled"));
+                status = -1;
+                break;
+            }
+            status = 0; err = nil;
+            ok = [self downloadSync:effectiveURL toFile:chunkPath
+                         chunkStart:startByte chunkEnd:endByte
+                        outFullSize:NULL
+                        isCancelled:isCancelled
+                           progress:progressBlock
+                         statusCode:&status error:&err
+                      redirectsLeft:10];
+            if (ok) break;
+            if (err.code == 99) break;
+            BOOL retryable = (status == 502 || status == 503 || status == 504);
+            if (!retryable) break;
+            NSTimeInterval delay = 1.0 * (1 << attempt);
+            NSDate *until = [NSDate dateWithTimeIntervalSinceNow:delay];
+            while ([until timeIntervalSinceNow] > 0) {
+                if (isCancelled && isCancelled()) break;
+                [NSThread sleepForTimeInterval:0.2];
+            }
+        }
+        if (completion) {
+            dispatch_async(dispatch_get_main_queue(), ^{ completion(ok, status, err); });
+        }
+    });
+}
+
++ (void)probeURL:(NSString *)url
+       completion:(void (^)(long long totalSize, BOOL rangeSupported, NSError *err))completion {
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // Strategy: do a tiny Range request (bytes=0-0) via the full redirect-
+        // following downloadSync chunk path. The chunk writes 1 byte to a temp
+        // file (which we discard) and we get the resource's full size via
+        // outFullSize (from the Content-Range header parsed inside downloadSync).
+        //
+        // Apply the same archive.org HTTPS→HTTP downgrade as downloadURL: so
+        // the chain ends on a CDN node where TLS works.
+        NSString *effectiveURL = url;
+        if ([url hasPrefix:@"https://"]
+            && ([url rangeOfString:@"archive.org"].location != NSNotFound)) {
+            effectiveURL = [@"http://" stringByAppendingString:[url substringFromIndex:8]];
+        }
+
+        NSString *tmpPath = [NSTemporaryDirectory()
+            stringByAppendingPathComponent:[NSString stringWithFormat:@"_probe_%@",
+                                              [[NSUUID UUID] UUIDString]]];
+        long long fullSize = -1;
+        NSInteger code = 0;
+        NSError *err = nil;
+        BOOL ok = [self downloadSync:effectiveURL toFile:tmpPath
+                          chunkStart:0 chunkEnd:0
+                         outFullSize:&fullSize
+                         isCancelled:nil
+                            progress:nil
+                          statusCode:&code error:&err
+                       redirectsLeft:10];
+        [[NSFileManager defaultManager] removeItemAtPath:tmpPath error:nil];
+
+        // 206 = server honored Range and gave us Content-Range with the total.
+        // 200 = server doesn't support Range — parallel chunks won't work.
+        BOOL rangeSupported = (code == 206 && fullSize > 0);
+        if (!ok && code != 206) {
+            // Network / DNS / etc. — bubble up. Caller falls back to single-stream.
+            if (completion) dispatch_async(dispatch_get_main_queue(), ^{
+                completion(-1, NO, err);
+            });
+            return;
+        }
+        if (completion) dispatch_async(dispatch_get_main_queue(), ^{
+            completion(fullSize, rangeSupported, nil);
+        });
+    });
+}
+
 + (void)downloadURL:(NSString *)url
               toFile:(NSString *)filePath
          isCancelled:(BOOL (^)(void))isCancelled
@@ -449,6 +546,9 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
         NSError *err = nil;
         BOOL ok = NO;
         // Retry on transient server errors (502 / 503 / 504). Exponential backoff: 1s, 2s, 4s.
+        // Partial files survive between attempts and HTTPSClient resumes them via
+        // Range: bytes=N-. Cleanup of the partial file is now the caller's responsibility
+        // (InstallManager already deletes on terminal failure / user cancel).
         for (int attempt = 0; attempt < 4; attempt++) {
             if (isCancelled && isCancelled()) {
                 err = mkErr(99, T(@"common.cancelled"));
@@ -456,11 +556,15 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
                 break;
             }
             status = 0; err = nil;
+            // Whole-file mode: chunkStart=-1, chunkEnd=-1 → use file-size-based
+            // resume (legacy behavior).
             ok = [self downloadSync:effectiveURL toFile:filePath
-                          isCancelled:isCancelled
-                              progress:progressBlock
-                            statusCode:&status error:&err
-                          redirectsLeft:10];
+                         chunkStart:-1 chunkEnd:-1
+                        outFullSize:NULL
+                        isCancelled:isCancelled
+                           progress:progressBlock
+                         statusCode:&status error:&err
+                      redirectsLeft:10];
             if (ok) break;
             // Cancellation surfaces as err.code == 99 — don't retry.
             if (err.code == 99) break;
@@ -475,10 +579,6 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
                 [NSThread sleepForTimeInterval:0.2];
             }
         }
-        // Clean up partial file on failure / cancellation
-        if (!ok) {
-            [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];
-        }
         if (completion) {
             dispatch_async(dispatch_get_main_queue(), ^{ completion(ok, status, err); });
         }
@@ -486,8 +586,27 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
 }
 
 // Sync, on background queue. Follows redirects via tail recursion.
+//
+// Two modes:
+//   - Whole-file (chunkStart == -1): the local file at `filePath` is treated
+//     as a partial download of the whole file. We send Range: bytes=N- with
+//     N = current local file size to resume. Total reported in progress is
+//     the full file size from Content-Length / Content-Range.
+//   - Chunk (chunkStart >= 0): the local file is a partial chunk covering
+//     server bytes [chunkStart, chunkEnd]. We send Range: bytes=A-B with
+//     A = chunkStart + localChunkSize, B = chunkEnd. Total reported is the
+//     chunk size (chunkEnd - chunkStart + 1) so the caller can aggregate
+//     progress across multiple parallel chunks.
+//
+// `outFullSize` (optional): when the server replies 206 with a Content-Range
+// "bytes A-B/TOTAL" header, *outFullSize is set to TOTAL. Used by probeURL:
+// to learn the resource's full size from a tiny Range request. Pass NULL
+// if not needed.
 + (BOOL)downloadSync:(NSString *)urlStr
               toFile:(NSString *)filePath
+          chunkStart:(long long)chunkStart
+            chunkEnd:(long long)chunkEnd
+         outFullSize:(long long *)outFullSize
          isCancelled:(BOOL (^)(void))isCancelled
             progress:(void (^)(long long, long long))progressBlock
           statusCode:(NSInteger *)outStatus
@@ -599,11 +718,85 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
     // ---- Send HTTP request ----
     // HTTP/1.0 + browser UA. Sticking to HTTP/1.0 because our body-reading loop doesn't
     // parse Transfer-Encoding: chunked (the default HTTP/1.1 framing).
-    NSString *req = [NSString stringWithFormat:
-        @"GET %@ HTTP/1.0\r\nHost: %@\r\nUser-Agent: Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25\r\nAccept: */*\r\nConnection: close\r\n\r\n",
-        encPath, host];
+    //
+    // Resume / Range support:
+    //   Whole-file mode (chunkStart < 0): the local file is treated as a partial
+    //   resume of the whole resource. We send Range: bytes=N- with N = current local
+    //   file size. Server replies 206 → we append; 200 → server ignored Range, we
+    //   truncate and restart.
+    //
+    //   Chunk mode (chunkStart >= 0): the local file is a partial chunk covering
+    //   server bytes [chunkStart, chunkEnd]. We send Range: bytes=A-B with
+    //   A = chunkStart + (local file size), B = chunkEnd. The 200-fallback can't
+    //   work in chunk mode (we'd be writing more than chunk size), so on a 200
+    //   response with chunk mode we abort with an error.
+    //
+    // archive.org S3 auth: when the host is *.archive.org and the user has saved S3
+    // keys (Settings → Archive.org login), we inject an Authorization header. This is
+    // the "low-security" S3 auth scheme archive.org uses for API calls. It can help
+    // with per-IP rate limiting and sometimes gives priority routing for downloads.
+    long long localExisting = 0;
+    NSDictionary *existing = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+    if (existing) {
+        localExisting = [existing[NSFileSize] longLongValue];
+    }
+    // Compute the server-side Range request:
+    //   reqRangeStart: first byte to ask for (in the resource's coordinate system)
+    //   reqRangeEnd:   last byte to ask for (or -1 = open-ended)
+    long long reqRangeStart, reqRangeEnd;
+    BOOL chunkMode = (chunkStart >= 0);
+    if (chunkMode) {
+        // Defensive: clamp localExisting to chunk size in case the chunk file is
+        // somehow bigger than the chunk (shouldn't happen, but if it does we don't
+        // want a negative range).
+        long long chunkSize = chunkEnd - chunkStart + 1;
+        if (localExisting > chunkSize) localExisting = chunkSize;
+        reqRangeStart = chunkStart + localExisting;
+        reqRangeEnd = chunkEnd;
+        if (reqRangeStart > reqRangeEnd) {
+            // Chunk already complete — short-circuit success without hitting network.
+            if (progressBlock) progressBlock(chunkSize, chunkSize);
+            if (outStatus) *outStatus = 206;
+            return YES;
+        }
+    } else {
+        reqRangeStart = localExisting;
+        reqRangeEnd = -1;
+    }
+
+    NSMutableString *reqBuilder = [NSMutableString stringWithCapacity:512];
+    [reqBuilder appendFormat:@"GET %@ HTTP/1.0\r\n", encPath];
+    [reqBuilder appendFormat:@"Host: %@\r\n", host];
+    [reqBuilder appendString:@"User-Agent: Mozilla/5.0 (iPad; CPU OS 6_1_3 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10B329 Safari/8536.25\r\n"];
+    [reqBuilder appendString:@"Accept: */*\r\n"];
+    [reqBuilder appendString:@"Connection: close\r\n"];
+    if (chunkMode) {
+        [reqBuilder appendFormat:@"Range: bytes=%lld-%lld\r\n", reqRangeStart, reqRangeEnd];
+        NSLog(@"[HTTPSClient] Chunk request: bytes %lld-%lld (local has %lld of chunk)",
+              reqRangeStart, reqRangeEnd, localExisting);
+    } else if (reqRangeStart > 0) {
+        [reqBuilder appendFormat:@"Range: bytes=%lld-\r\n", reqRangeStart];
+        NSLog(@"[HTTPSClient] Resuming from byte %lld", reqRangeStart);
+    }
+    // archive.org S3 auth (any *.archive.org host)
+    if ([host.lowercaseString hasSuffix:@"archive.org"]) {
+        NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+        NSString *accessKey = [def stringForKey:@"IPAInstall.ArchiveAccessKey"];
+        NSString *secretKey = [def stringForKey:@"IPAInstall.ArchiveSecretKey"];
+        if (accessKey.length && secretKey.length) {
+            [reqBuilder appendFormat:@"Authorization: LOW %@:%@\r\n", accessKey, secretKey];
+        }
+    }
+    [reqBuilder appendString:@"\r\n"];
+    NSString *req = reqBuilder;
     const char *reqBytes = [req UTF8String];
     size_t reqLen = strlen(reqBytes);
+
+    // resumeFrom is the legacy variable used downstream (file-write logic). In
+    // chunk mode it represents the byte count we already have locally for the
+    // chunk; in whole-file mode it's the byte count we already have for the
+    // whole file. The downstream "received" counter is initialized to this.
+    long long resumeFrom = localExisting;
     if (sslReady) {
         size_t written = 0;
         while (written < reqLen) {
@@ -663,7 +856,7 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
         if (sslReady) { mbedtls_ssl_free(&ssl); mbedtls_ssl_config_free(&conf);
                         mbedtls_ctr_drbg_free(&drbg); mbedtls_entropy_free(&entropy); }
         close(fd);
-        if (outError) *outError = mkErr(20, @"Pas de headers HTTP recus");
+        if (outError) *outError = mkErr(20, T(@"install.error.no_headers"));
         return NO;
     }
 
@@ -699,7 +892,7 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
         close(fd); fd = -1;
         if (!location.length) {
             if (outError) *outError = mkErr(31,
-                [NSString stringWithFormat:@"Redirect HTTP %ld sans header Location",
+                [NSString stringWithFormat:T(@"install.error.redirect_no_location"),
                   (long)statusCode]);
             return NO;
         }
@@ -722,12 +915,33 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
         // IMPORTANT: reset outStatus to 0 so the recursive call's value (whatever the chain
         // ends up returning, 200 / 404 / etc.) is what gets surfaced — not this 30x.
         if (outStatus) *outStatus = 0;
-        // Recurse with new URL
+        // Recurse with new URL — pass chunk params through unchanged.
         return [self downloadSync:location toFile:filePath
+                        chunkStart:chunkStart chunkEnd:chunkEnd
+                       outFullSize:outFullSize
                        isCancelled:isCancelled
                           progress:progressBlock
                         statusCode:outStatus error:outError
                      redirectsLeft:redirectsLeft - 1];
+    }
+
+    // 416 Range Not Satisfiable — file we have on disk is >= server's file size.
+    // Most likely the partial file is stale (server file changed) or already complete.
+    // Delete it and let the caller retry from scratch (next attempt will see no
+    // partial file, omit the Range header, and refetch from byte 0).
+    if (statusCode == 416 && resumeFrom > 0) {
+        if (sslReady) { mbedtls_ssl_free(&ssl); mbedtls_ssl_config_free(&conf);
+                        mbedtls_ctr_drbg_free(&drbg); mbedtls_entropy_free(&entropy); }
+        close(fd);
+        [[NSFileManager defaultManager] removeItemAtPath:filePath error:nil];
+        NSLog(@"[HTTPSClient] 416 with resumeFrom=%lld — discarding partial, retrying from scratch", resumeFrom);
+        return [self downloadSync:urlStr toFile:filePath
+                       chunkStart:chunkStart chunkEnd:chunkEnd
+                      outFullSize:outFullSize
+                      isCancelled:isCancelled
+                         progress:progressBlock
+                       statusCode:outStatus error:outError
+                    redirectsLeft:redirectsLeft];
     }
 
     if (statusCode < 200 || statusCode >= 300) {
@@ -738,22 +952,74 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
         return NO;
     }
 
-    // Parse Content-Length for progress total
+    // In chunk mode a 200 response is a fatal mismatch: we asked for bytes A-B
+    // explicitly and the server sent the whole file. We can't proceed because the
+    // chunk file would be filled with unrelated bytes. Bail and let the caller
+    // either retry or fall back to single-stream whole-file download.
+    if (chunkMode && statusCode == 200) {
+        if (sslReady) { mbedtls_ssl_free(&ssl); mbedtls_ssl_config_free(&conf);
+                        mbedtls_ctr_drbg_free(&drbg); mbedtls_entropy_free(&entropy); }
+        close(fd);
+        if (outError) *outError = mkErr(206, @"Server ignored Range header (chunk mode requires 206)");
+        return NO;
+    }
+
+    // Whether the server honored our Range request. If we sent Range but got 200 (not 206),
+    // the server is sending the whole file — we must truncate any existing partial bytes
+    // and restart from offset 0.
+    BOOL isPartialResponse = (statusCode == 206);
+    BOOL effectiveResume = isPartialResponse && resumeFrom > 0;
+
+    // Parse Content-Length for progress total.
+    // For 206 Partial Content, Content-Length is the size of the slice we're getting —
+    // the full file size is given by Content-Range: bytes A-B/TOTAL. Parse both.
     long long total = -1;
+    long long contentLength = -1;
     {
         NSArray *lines = [headerStr componentsSeparatedByString:@"\r\n"];
         for (NSString *ln in lines) {
-            NSRange r = [ln rangeOfString:@"Content-Length:" options:NSCaseInsensitiveSearch];
-            if (r.location == 0) {
-                total = [[ln substringFromIndex:r.length]
-                          stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].longLongValue;
-                break;
+            NSRange clr = [ln rangeOfString:@"Content-Length:" options:NSCaseInsensitiveSearch];
+            if (clr.location == 0) {
+                contentLength = [[ln substringFromIndex:clr.length]
+                                  stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]].longLongValue;
+                continue;
+            }
+            NSRange crr = [ln rangeOfString:@"Content-Range:" options:NSCaseInsensitiveSearch];
+            if (crr.location == 0) {
+                // Format: "Content-Range: bytes 100-999/1000"
+                NSString *val = [[ln substringFromIndex:crr.length]
+                                  stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+                NSRange slash = [val rangeOfString:@"/"];
+                if (slash.location != NSNotFound && slash.location + 1 < val.length) {
+                    NSString *totalStr = [val substringFromIndex:slash.location + 1];
+                    long long parsed = [totalStr longLongValue];
+                    if (parsed > 0) {
+                        total = parsed;
+                        if (outFullSize) *outFullSize = parsed;  // expose for probe
+                    }
+                }
             }
         }
     }
+    // If Content-Range didn't give us a total, derive it from Content-Length + offset.
+    if (total < 0) {
+        if (effectiveResume && contentLength > 0) {
+            total = resumeFrom + contentLength;
+        } else if (contentLength > 0) {
+            total = contentLength;
+        }
+    }
+    // In chunk mode, override total with the chunk size so the caller's progress
+    // block sees this chunk's progress (received_in_chunk / chunk_size). The
+    // caller (ParallelDownloader) aggregates across chunks to get full-file %.
+    if (chunkMode) {
+        total = chunkEnd - chunkStart + 1;
+    }
 
     // ---- Write body to file, with progress ----
-    FILE *outFile = fopen([filePath fileSystemRepresentation], "wb");
+    // Append mode if the server honored our Range, write mode otherwise (which truncates
+    // any existing partial file — appropriate when we got 200 instead of 206).
+    FILE *outFile = fopen([filePath fileSystemRepresentation], effectiveResume ? "ab" : "wb");
     if (!outFile) {
         if (sslReady) { mbedtls_ssl_free(&ssl); mbedtls_ssl_config_free(&conf);
                         mbedtls_ctr_drbg_free(&drbg); mbedtls_entropy_free(&entropy); }
@@ -761,8 +1027,16 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
         if (outError) *outError = mkErr(40, @"Cannot open output file");
         return NO;
     }
+    if (effectiveResume) {
+        NSLog(@"[HTTPSClient] Server honored Range — appending %lld more bytes (total %lld)",
+              contentLength, total);
+    } else if (resumeFrom > 0) {
+        NSLog(@"[HTTPSClient] Server ignored Range (HTTP %ld) — restarting from 0", (long)statusCode);
+    }
 
-    long long received = 0;
+    // For 206, the bytes we've ALREADY downloaded count toward the "received" total
+    // shown to the user. So we start the counter at resumeFrom.
+    long long received = effectiveResume ? resumeFrom : 0;
     // First, write the part of headerBuf that's body
     if ((NSUInteger)headerEnd < headerBuf.length) {
         NSUInteger leftover = headerBuf.length - headerEnd;

@@ -1,6 +1,8 @@
 #import "InstallManager.h"
 #import "HTTPSClient.h"
+#import "ParallelDownloader.h"
 #import "Localization.h"
+#import "MachOInspector.h"
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -18,6 +20,9 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
 @property (nonatomic, strong) NSMutableDictionary *jobsById;
 @property (nonatomic, strong) NSTimer *pollTimer;
 @property (nonatomic, copy) NSString *cachedBackendURL;
+- (void)attemptDownloadForJob:(InstallJob *)job
+                    localPath:(NSString *)localPath
+                      attempt:(int)attempt;
 @end
 
 @implementation InstallManager
@@ -33,7 +38,8 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     if ((self = [super init])) {
         _jobsById = [[NSMutableDictionary alloc] init];
         [self loadJobsFromDisk];
-        [self sweepOrphanTempFiles];   // v2.0.28
+        [self sweepOrphanTempFiles];        // v2.0.28
+        [self sweepDocumentsAppDropFolder]; // v1.2: cap saved-for-Filza .ipas
         _pollTimer = [NSTimer scheduledTimerWithTimeInterval:2.0
                                                       target:self
                                                     selector:@selector(pollAllActiveJobs)
@@ -58,6 +64,73 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
 //
 // Each app reinstall via ipainstaller gets a new sandbox UUID, so this isn't a long-term
 // hoarder — but better safe than sorry, and it gives us a clean baseline every launch.
+// Documents/AppDrop/ collects .ipa files that couldn't be auto-installed (iOS 10+
+// where ipainstaller is broken). Cap the directory at 14-day age + 500 MB total
+// so a user who downloads dozens of apps doesn't slowly fill up their device.
+//   Pass 1: delete anything older than 14 days
+//   Pass 2: if still over 500 MB, delete oldest-first until under cap
+- (void)sweepDocumentsAppDropFolder {
+    NSString *docsRoot = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *dir = [docsRoot stringByAppendingPathComponent:@"AppDrop"];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSArray *names = [fm contentsOfDirectoryAtPath:dir error:nil];
+    if (!names.count) return;
+
+    NSDate *cutoff = [NSDate dateWithTimeIntervalSinceNow:-14 * 24 * 3600];
+    const long long kSizeCap = 500LL * 1024 * 1024;
+
+    NSMutableArray *items = [NSMutableArray array];
+    long long totalSize = 0;
+    for (NSString *name in names) {
+        if (![name.lowercaseString hasSuffix:@".ipa"]) continue;
+        NSString *path = [dir stringByAppendingPathComponent:name];
+        NSDictionary *attrs = [fm attributesOfItemAtPath:path error:nil];
+        NSDate *mtime = attrs[NSFileModificationDate];
+        long long size = [attrs[NSFileSize] longLongValue];
+        if (!mtime) continue;
+        [items addObject:@{ @"path": path, @"mtime": mtime, @"size": @(size) }];
+        totalSize += size;
+    }
+
+    // Pass 1: age-based
+    NSMutableArray *remaining = [NSMutableArray array];
+    NSInteger ageDeleted = 0;
+    long long ageBytes = 0;
+    for (NSDictionary *it in items) {
+        if ([it[@"mtime"] compare:cutoff] == NSOrderedAscending) {
+            if ([fm removeItemAtPath:it[@"path"] error:nil]) {
+                ageDeleted++;
+                ageBytes += [it[@"size"] longLongValue];
+                totalSize -= [it[@"size"] longLongValue];
+            }
+        } else {
+            [remaining addObject:it];
+        }
+    }
+
+    // Pass 2: cap-based (oldest first)
+    NSArray *sorted = [remaining sortedArrayUsingComparator:^NSComparisonResult(NSDictionary *a, NSDictionary *b) {
+        return [a[@"mtime"] compare:b[@"mtime"]];
+    }];
+    NSInteger capDeleted = 0;
+    long long capBytes = 0;
+    for (NSDictionary *it in sorted) {
+        if (totalSize <= kSizeCap) break;
+        if ([fm removeItemAtPath:it[@"path"] error:nil]) {
+            long long s = [it[@"size"] longLongValue];
+            totalSize -= s;
+            capDeleted++;
+            capBytes += s;
+        }
+    }
+
+    if (ageDeleted + capDeleted > 0) {
+        NSLog(@"[InstallManager] Documents/AppDrop sweep: %ld old (%.1f MB) + %ld over-cap (%.1f MB)",
+              (long)ageDeleted, ageBytes / 1048576.0,
+              (long)capDeleted, capBytes / 1048576.0);
+    }
+}
+
 - (void)sweepOrphanTempFiles {
     NSString *tmpDir = NSTemporaryDirectory();
     NSFileManager *fm = [NSFileManager defaultManager];
@@ -65,15 +138,40 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     NSInteger n = 0;
     long long bytes = 0;
     for (NSString *name in entries) {
-        if (![name hasPrefix:@"_inst_"] || ![name hasSuffix:@".ipa"]) continue;
+        if (![name hasPrefix:@"_inst_"]) continue;
+        // Match both `_inst_<uuid>.ipa` (legacy + final files) and the
+        // `.partN` sidecars created by ParallelDownloader (build 9). Both
+        // come from a previous crashed/interrupted install and are unsafe
+        // to keep across launches — they belong to job UUIDs we no longer
+        // know about and a new install will allocate a fresh UUID anyway.
+        BOOL isIPA = [name hasSuffix:@".ipa"];
+        BOOL isPart = ([name rangeOfString:@".ipa.part"].location != NSNotFound);
+        BOOL isProbe = [name hasPrefix:@"_probe_"];  // shouldn't be _inst_ but defensive
+        if (!isIPA && !isPart && !isProbe) continue;
         NSString *path = [tmpDir stringByAppendingPathComponent:name];
         NSDictionary *attrs = [fm attributesOfItemAtPath:path error:nil];
         bytes += [attrs[NSFileSize] longLongValue];
         if ([fm removeItemAtPath:path error:nil]) n++;
     }
     if (n > 0) {
-        NSLog(@"[InstallManager] swept %ld orphan _inst_*.ipa files (%.1f MB total)",
+        NSLog(@"[InstallManager] swept %ld orphan _inst_*.{ipa,partN} files (%.1f MB total)",
               (long)n, bytes / 1048576.0);
+    }
+}
+
+// Delete every chunk sidecar (<localPath>.part0, .part1, …) associated with
+// `localPath`. Called from terminal failure / user-cancel paths so partial
+// chunks don't pile up in /tmp between abandoned downloads.
+- (void)deleteChunkSidecarsFor:(NSString *)localPath {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    NSString *dir = [localPath stringByDeletingLastPathComponent];
+    NSString *base = [localPath lastPathComponent];
+    NSArray *entries = [fm contentsOfDirectoryAtPath:dir error:nil];
+    NSString *prefix = [base stringByAppendingString:@".part"];
+    for (NSString *name in entries) {
+        if ([name hasPrefix:prefix]) {
+            [fm removeItemAtPath:[dir stringByAppendingPathComponent:name] error:nil];
+        }
     }
 }
 
@@ -222,13 +320,48 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     });
 }
 
+// Save a downloaded .ipa into our app's Documents folder so the user can
+// recover it (open in Filza/iFile) when auto-install can't run. Used in two
+// cases: (1) iOS 10+ where ipainstaller is broken, (2) install failure on
+// any iOS so the .ipa isn't lost. Returns the absolute destination path, or
+// nil on copy failure.
++ (NSString *)saveIPAToDocuments:(NSString *)sourcePath originalURL:(NSString *)url {
+    NSString *docsRoot = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *destDir = [docsRoot stringByAppendingPathComponent:@"AppDrop"];
+    NSFileManager *fm = [NSFileManager defaultManager];
+    [fm createDirectoryAtPath:destDir withIntermediateDirectories:YES
+                    attributes:nil error:nil];
+    NSString *filename = [[NSURL URLWithString:url] lastPathComponent] ?: @"app.ipa";
+    NSString *destPath = [destDir stringByAppendingPathComponent:filename];
+    // If a previous copy exists with same name, remove it before moving the new one.
+    [fm removeItemAtPath:destPath error:nil];
+    NSError *moveErr = nil;
+    if (![fm moveItemAtPath:sourcePath toPath:destPath error:&moveErr]) {
+        // Move failed (e.g. cross-volume) — try copy as fallback.
+        if (![fm copyItemAtPath:sourcePath toPath:destPath error:&moveErr]) {
+            NSLog(@"[InstallManager] saveIPAToDocuments failed: %@", moveErr);
+            return nil;
+        }
+        [fm removeItemAtPath:sourcePath error:nil];
+    }
+    return destPath;
+}
+
+// Major iOS version on the running device (e.g. 6 for iOS 6.1.3, 10 for 10.3.4).
+// Used to skip ipainstaller on iOS 10+ where it's broken.
++ (NSInteger)iosMajorVersion {
+    NSString *v = [[UIDevice currentDevice] systemVersion];
+    NSString *firstPart = [[v componentsSeparatedByString:@"."] firstObject];
+    return [firstPart integerValue];
+}
+
 - (void)runAutonomousJob:(InstallJob *)job {
     NSString *tmpDir = NSTemporaryDirectory();
     NSString *localPath = [tmpDir stringByAppendingPathComponent:
                             [NSString stringWithFormat:@"_inst_%@.ipa",
                              [job.jobId substringFromIndex:6]]];
 
-    // Phase 1: download with progress
+    // Phase 1: download with progress + slow-mirror retry.
     dispatch_async(dispatch_get_main_queue(), ^{
         job.state = @"downloading";
         job.message = T(@"install.state.connecting");
@@ -236,18 +369,65 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
         [self postChanged];
     });
 
+    [self attemptDownloadForJob:job localPath:localPath attempt:0];
+}
+
+// One download attempt against archive.org. On slow-mirror abort, recursively retries
+// (up to kMaxMirrorAttempts total). HTTPSClient preserves the partial .ipa between
+// attempts and sends Range: bytes=N- so we resume rather than restart — the retry's
+// real benefit is that archive.org's load-balancer typically routes the new TCP
+// connection to a different CDN node, hopefully a faster one.
+- (void)attemptDownloadForJob:(InstallJob *)job
+                    localPath:(NSString *)localPath
+                      attempt:(int)attempt {
+    // 3 attempts total: original + 2 retries. Each retry is ~30s+ apart (the time it
+    // takes to detect the stall), so worst case the user waits ~90s before we give up.
+    static const int kMaxMirrorAttempts = 3;
+    static const double kSlowThresholdBytesPerSec = 100.0 * 1024.0;  // 100 KB/s
+    static const NSTimeInterval kSlowCheckWindow = 30.0;             // observe over 30s
+
     __block long long lastReceived = 0;
     __block NSDate *lastTick = [NSDate date];
+    // Slow-mirror detection state. We sample the byte counter every kSlowCheckWindow
+    // seconds; if avg throughput in that window is under the threshold AND we have
+    // retry budget, we trip slowAbort which the isCancelled block returns YES for.
+    __block NSDate *windowStart = [NSDate date];
+    __block long long windowStartBytes = 0;
+    __block BOOL slowAbort = NO;
 
-    // Cancellation: poll job.cancelRequested from the background download loop.
-    // job is captured weakly through a __weak ref to avoid retain cycles if the user
-    // wipes the jobs dictionary mid-download.
+    // Stream count from Settings (default 4). 1 disables parallelism and
+    // ParallelDownloader transparently falls back to the legacy single-stream
+    // path. Anything else triggers probe → chunk split → concurrent downloads.
+    NSInteger streams = [[NSUserDefaults standardUserDefaults] integerForKey:@"IPAInstall.ParallelStreams"];
+    if (streams <= 0) streams = 4;
+    if (streams > 8) streams = 8;
+
     __weak InstallJob *weakJob = job;
-    [HTTPSClient downloadURL:job.url
-                       toFile:localPath
-                  isCancelled:^BOOL{
+    [ParallelDownloader downloadURL:job.url
+                              toFile:localPath
+                         streamCount:streams
+                         isCancelled:^BOOL{
         InstallJob *j = weakJob;
-        return j == nil || j.cancelRequested;
+        if (!j || j.cancelRequested) return YES;
+        // Only consider slow-mirror abort if we still have retry budget — otherwise
+        // there's no point dropping the connection.
+        if (attempt < kMaxMirrorAttempts - 1) {
+            NSTimeInterval elapsed = -[windowStart timeIntervalSinceNow];
+            if (elapsed >= kSlowCheckWindow) {
+                long long delta = lastReceived - windowStartBytes;
+                double bps = elapsed > 0 ? delta / elapsed : 0;
+                if (bps < kSlowThresholdBytesPerSec) {
+                    NSLog(@"[InstallManager] Mirror slow (%.1f KB/s avg over %.0fs) — abort to retry (attempt %d/%d)",
+                          bps / 1024.0, elapsed, attempt + 1, kMaxMirrorAttempts);
+                    slowAbort = YES;
+                    return YES;
+                }
+                // Healthy speed — reset the window and keep going.
+                windowStart = [NSDate date];
+                windowStartBytes = lastReceived;
+            }
+        }
+        return NO;
     }
                      progress:^(long long received, long long total) {
         NSDate *now = [NSDate date];
@@ -256,12 +436,14 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
         lastReceived = received;
         lastTick = now;
         dispatch_async(dispatch_get_main_queue(), ^{
-            job.currentBytes = received;
-            job.totalBytes = total;
-            if (bps > 0) job.bytesPerSec = job.bytesPerSec * 0.5 + bps * 0.5;
+            InstallJob *j = weakJob;
+            if (!j) return;
+            j.currentBytes = received;
+            j.totalBytes = total;
+            if (bps > 0) j.bytesPerSec = j.bytesPerSec * 0.5 + bps * 0.5;
             NSInteger pct = total > 0 ? (NSInteger)(received * 100 / total) : 0;
-            job.progress = pct;
-            job.message = total > 0
+            j.progress = pct;
+            j.message = total > 0
                 ? [NSString stringWithFormat:T(@"install.state.downloading_full"),
                      received/1048576.0, total/1048576.0, (long)pct]
                 : [NSString stringWithFormat:T(@"install.state.downloading_partial"),
@@ -271,6 +453,24 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     }
                    completion:^(BOOL ok, NSInteger status, NSError *err) {
         if (!ok) {
+            // Slow-mirror retry: don't surface the failure, just kick off a new attempt.
+            // The partial .ipa stays on disk; HTTPSClient will send Range: bytes=N-.
+            if (slowAbort && !job.cancelRequested && attempt < kMaxMirrorAttempts - 1) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    InstallJob *j = weakJob;
+                    if (!j || j.cancelRequested) return;
+                    j.message = [NSString stringWithFormat:T(@"install.state.retrying_mirror"),
+                                   attempt + 2, kMaxMirrorAttempts];
+                    [self postChanged];
+                });
+                // Tiny delay before the retry so the progress message is visible and so
+                // we don't hammer archive.org if something is very wrong server-side.
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)),
+                               dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    [self attemptDownloadForJob:job localPath:localPath attempt:attempt + 1];
+                });
+                return;
+            }
             BOOL wasCancelled = job.cancelRequested || err.code == 99;
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (wasCancelled) {
@@ -296,6 +496,7 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
                 }
                 [self postChanged];
                 [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
+                [self deleteChunkSidecarsFor:localPath];
             });
             return;
         }
@@ -307,9 +508,55 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
                 job.message = T(@"install.state.cancelled_user");
                 [self postChanged];
                 [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
+                [self deleteChunkSidecarsFor:localPath];
             });
             return;
         }
+
+        // FairPlay encryption check (v1.2 build 8).
+        // archive.org hosts a mix of cracked .ipas (cryptid=0, runs on any
+        // jailbreak) and raw iTunes-purchase dumps that someone forgot to
+        // crack (cryptid=1, only runs on the original buyer's Apple ID).
+        // Calling ipainstaller on the latter wastes time and slot — the
+        // app either silently refuses to launch or crashes on dyld load.
+        // We peek the Mach-O header here, before any iOS-version branching,
+        // and fail-fast with a clear message so the user can try another
+        // mirror. Inspector returns Unknown on any parse / read error,
+        // which we treat as "proceed" (false-negative ≪ false-positive).
+        MachOInspectionResult enc = [MachOInspector inspectIPA:localPath];
+        if (enc == MachOInspectionResultEncrypted) {
+            NSLog(@"[InstallManager] FairPlay-encrypted .ipa detected: %@", job.url);
+            dispatch_async(dispatch_get_main_queue(), ^{
+                job.state = @"failed";
+                job.message = T(@"install.error.fairplay");
+                [self postChanged];
+                [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
+            });
+            return;
+        }
+
+        // iOS 10+ branch: ipainstaller is broken on iOS 10 (silent failures with
+        // "Installed successfully" stdout but no actual app appearing on the home
+        // screen). Skip it entirely and save the .ipa to our Documents folder so
+        // the user can install it manually via Filza or iFile.
+        if ([InstallManager iosMajorVersion] >= 10) {
+            NSString *saved = [InstallManager saveIPAToDocuments:localPath
+                                                       originalURL:job.url];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (saved) {
+                    job.state = @"completed";  // really "saved" but using completed for UI parity
+                    job.progress = 100;
+                    job.message = [NSString stringWithFormat:T(@"install.modern_ios_msg"), saved];
+                } else {
+                    job.state = @"failed";
+                    job.message = [NSString stringWithFormat:T(@"install.error.failed_prefix"),
+                                     @"Could not save .ipa to Documents"];
+                }
+                [self postChanged];
+            });
+            return;
+        }
+
         // Phase 2: invoke ipainstaller via posix_spawn
         dispatch_async(dispatch_get_main_queue(), ^{
             job.state = @"installing";
@@ -333,14 +580,21 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
                         ? [out substringWithRange:[m rangeAtIndex:1]]
                         : @"app";
                     job.message = [NSString stringWithFormat:T(@"install.state.installed_prefix"), name];
+                    // Success: delete the temp .ipa, we no longer need it.
+                    [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
                 } else {
+                    // Install failure: delete the .ipa (user feedback v1.2 — they don't
+                    // want failed-install .ipas accumulating in Documents/). Users on
+                    // iOS 10+ get their .ipa saved automatically via the early-return
+                    // branch above, so they're covered. iOS 6-9 users typically just
+                    // need to retry, no point keeping garbage around.
                     job.state = @"failed";
                     job.message = [NSString stringWithFormat:T(@"install.error.install_failed"),
                                      exitCode,
                                      out.length > 300 ? [out substringFromIndex:out.length-300] : out];
+                    [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
                 }
                 [self postChanged];
-                [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
             });
         });
     }];

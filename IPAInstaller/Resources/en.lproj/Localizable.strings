@@ -122,6 +122,14 @@
 "install.error.5xx_generic" = "Server error HTTP %ld";
 "install.error.http_generic" = "HTTP %ld";
 "install.error.network" = "Network failure";
+"unit.b" = "B";
+"unit.kb" = "KB";
+"unit.mb" = "MB";
+"unit.gb" = "GB";
+"install.modern_ios_msg" = "This iOS version doesn't support ipainstaller. The .ipa was saved at:\n%@\nOpen it in Filza or iFile to install manually.";
+"install.kept_after_fail" = "Install failed. The .ipa was kept at:\n%@\nYou can install it manually via Filza or iFile.";
+"install.state.saved_for_manual" = "Saved (open in Filza)";
+"chat.llm_unavailable" = "AI service unavailable. Pollinations.ai may be temporarily down — please try again in a few minutes.";
 "install.error.no_ipainstaller" = "ipainstaller not found. Install the « IPA Installer Console » package from Cydia/Sileo (search: appinst or ipainstaller).";
 "install.error.spawn_failed" = "posix_spawn(%s) failed: %s";
 "install.error.install_failed" = "Install failed (exit %d): %@";
@@ -180,3 +188,33 @@
 "onboarding.catalog_quality_msg" = "The upstream catalog has a small fraction of apps with wrong title or icon — this is out of our control (data issue at stuffed18.github.io, not the app). The .ipa filename shown under each app is what will actually install. Please double-check before installing if the app is what you want.";
 "common.understood" = "Got it";
 "filter.footer.sort" = "Tap the selected option again to toggle ascending / descending.";
+
+/* ===== v1.2 — Mirror retry on slow download ===== */
+"install.state.retrying_mirror" = "Mirror slow — retrying (%d/%d)…";
+
+/* ===== v1.2 build 8 — Pre-install FairPlay encryption check ===== */
+"install.error.fairplay" = "This .ipa is still FairPlay-encrypted — tied to the Apple ID that purchased it on the App Store, so it won't run on your device. Try a different mirror from the Versions list (the catalog often has multiple sources for the same app).";
+
+/* ===== v1.2 build 9 — Parallel chunked downloads ===== */
+"settings.section_download" = "Download";
+"settings.parallel_streams" = "Parallel streams";
+"settings.parallel_streams_footer" = "archive.org throttles per TCP connection. Splitting a download into multiple parallel chunks (each with its own connection) can yield 3-4× the speed. 4 is the typical sweet spot — going higher rarely helps and may get all streams throttled together. Set to 1 to disable.";
+"settings.streams_off" = "1 (single stream)";
+"settings.streams_n" = "%ld parallel streams";
+
+/* ===== v1.2 build 9 — Download error messages (previously hardcoded) ===== */
+"install.error.open_final" = "Could not create the final .ipa file (disk full or sandbox restriction?)";
+"install.error.open_chunk" = "Could not read chunk file %@";
+"install.error.concat_write" = "Write failed during chunk reassembly (disk full?)";
+"install.error.no_headers" = "No HTTP headers received from server";
+"install.error.redirect_no_location" = "Redirect HTTP %ld with no Location header";
+
+/* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
+"settings.section_archive" = "Archive.org account";
+"settings.section_archive_footer" = "Optional. Sign in with your archive.org account to potentially reduce per-IP rate limiting on downloads. Get your S3 keys at: archive.org/account/s3.php";
+"settings.archive_email" = "Email";
+"settings.archive_access_key" = "Access Key";
+"settings.archive_secret_key" = "Secret Key";
+"settings.archive_not_set" = "Not set";
+"settings.archive_help" = "Get your keys at archive.org/account/s3.php. Leave empty to clear.";
+"settings.archive_save" = "Save";

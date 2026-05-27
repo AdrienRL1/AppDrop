@@ -114,6 +114,14 @@
 "install.error.5xx_generic" = "サーバエラー HTTP %ld";
 "install.error.http_generic" = "HTTP %ld";
 "install.error.network" = "ネットワーク障害";
+"unit.b" = "B";
+"unit.kb" = "KB";
+"unit.mb" = "MB";
+"unit.gb" = "GB";
+"install.modern_ios_msg" = "このiOSバージョンではipainstallerが動作しません。.ipaは以下に保存されました:\n%@\nFilzaまたはiFileで開いて手動でインストールしてください。";
+"install.kept_after_fail" = "インストールに失敗しました。.ipaは以下に保存されました:\n%@\nFilzaまたはiFileで手動インストールできます。";
+"install.state.saved_for_manual" = "保存済み(Filzaで開く)";
+"chat.llm_unavailable" = "AIサービスが利用できません。Pollinations.aiが一時的に停止している可能性があります — 数分後に再試行してください。";
 "install.error.no_ipainstaller" = "ipainstaller が見つかりません。Cydia/Sileo から「IPA Installer Console」パッケージをインストールしてください (検索: appinst または ipainstaller)。";
 "install.error.spawn_failed" = "posix_spawn(%s) が失敗: %s";
 "install.error.install_failed" = "インストール失敗 (exit %d): %@";
@@ -172,3 +180,33 @@
 "onboarding.catalog_quality_msg" = "上流カタログにはタイトルやアイコンが正しくないアプリがわずかに含まれています。これは私たちの管理外です (stuffed18.github.io のデータの問題で、アプリの問題ではありません)。各アプリの下に表示される .ipa ファイル名が、実際にインストールされるものです。インストール前に、目的のアプリかどうか必ず確認してください。";
 "common.understood" = "了解";
 "filter.footer.sort" = "選択中のオプションを再度タップすると、昇順 / 降順を切り替えられます。";
+
+/* ===== v1.2 — Mirror retry on slow download ===== */
+"install.state.retrying_mirror" = "ミラーが遅い — 再試行中 (%d/%d)…";
+
+/* ===== v1.2 build 8 — Pre-install FairPlay encryption check ===== */
+"install.error.fairplay" = "この .ipa はまだ FairPlay で暗号化されています — App Store で購入した Apple ID に紐づいているため、お使いのデバイスでは動作しません。バージョン一覧から別のミラーを試してください (カタログには同じアプリの複数のソースが含まれていることがよくあります)。";
+
+/* ===== v1.2 build 9 — Parallel chunked downloads ===== */
+"settings.section_download" = "ダウンロード";
+"settings.parallel_streams" = "並列ストリーム";
+"settings.parallel_streams_footer" = "archive.org は TCP 接続ごとに帯域を制限しています。ダウンロードを複数の並列チャンク (それぞれ独自の接続) に分割すると、3-4 倍の速度が得られることがあります。4 が一般的に最適 — それ以上は効果が薄く、全体が制限される場合もあります。1 にすると無効化されます。";
+"settings.streams_off" = "1 (シングルストリーム)";
+"settings.streams_n" = "%ld 並列ストリーム";
+
+/* ===== v1.2 build 9 — ダウンロードエラーメッセージ (以前はハードコード) ===== */
+"install.error.open_final" = "最終的な .ipa ファイルを作成できませんでした (ディスク不足またはサンドボックスの制限？)";
+"install.error.open_chunk" = "チャンクファイル %@ を読み込めませんでした";
+"install.error.concat_write" = "チャンクの再結合中に書き込みが失敗しました (ディスク不足？)";
+"install.error.no_headers" = "サーバーから HTTP ヘッダーを受信できませんでした";
+"install.error.redirect_no_location" = "HTTP %ld のリダイレクトに Location ヘッダーがありません";
+
+/* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
+"settings.section_archive" = "Archive.org アカウント";
+"settings.section_archive_footer" = "オプション。archive.org アカウントでサインインすると、ダウンロードの IP 別レート制限が緩和される可能性があります。S3 キーは次のページで取得: archive.org/account/s3.php";
+"settings.archive_email" = "メールアドレス";
+"settings.archive_access_key" = "アクセスキー (Access Key)";
+"settings.archive_secret_key" = "シークレットキー (Secret Key)";
+"settings.archive_not_set" = "未設定";
+"settings.archive_help" = "キーは archive.org/account/s3.php で取得できます。空欄にすると削除されます。";
+"settings.archive_save" = "保存";

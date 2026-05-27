@@ -43,4 +43,35 @@
             progress:(void (^)(long long received, long long total))progressBlock
           completion:(void (^)(BOOL success, NSInteger statusCode, NSError *err))completion;
 
+// Download a specific byte range of `url` into `chunkPath`. Used by
+// ParallelDownloader to fetch multiple non-overlapping chunks of a large
+// file in parallel.
+//
+// `startByte` and `endByte` are inclusive byte offsets in the resource.
+// The local `chunkPath` is treated as a partial chunk — if it already
+// contains K bytes, we resume from `startByte + K` (the same Range-resume
+// trick used by downloadURL:toFile:, but bounded to the chunk's end).
+//
+// Progress block reports (bytesReceivedForThisChunk, chunkSize) — that is,
+// the chunk's local progress, not the full-file progress. ParallelDownloader
+// is responsible for aggregating across chunks.
+//
+// If the server doesn't honor the Range header (replies 200 instead of 206),
+// the call fails with a clear error — chunked downloads require Range
+// support. Caller should fall back to single-stream downloadURL: in that case.
++ (void)downloadChunk:(NSString *)url
+              fromByte:(long long)startByte
+                toByte:(long long)endByte
+                toFile:(NSString *)chunkPath
+           isCancelled:(BOOL (^)(void))isCancelled
+              progress:(void (^)(long long received, long long total))progressBlock
+            completion:(void (^)(BOOL success, NSInteger statusCode, NSError *err))completion;
+
+// Probe a URL with HEAD (or fall back to a tiny Range GET) to discover the
+// total file size and verify Range support. Used by ParallelDownloader
+// before splitting into chunks. Returns -1 in `outTotalSize` on failure.
+// `outRangeSupported` is YES iff the server returned 206 / Accept-Ranges: bytes.
++ (void)probeURL:(NSString *)url
+       completion:(void (^)(long long totalSize, BOOL rangeSupported, NSError *err))completion;
+
 @end

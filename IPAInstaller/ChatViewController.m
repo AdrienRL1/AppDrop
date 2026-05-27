@@ -219,7 +219,7 @@
     [[PollinationsLLM shared] askForKeywordsAndReply:text
                 completion:^(NSArray *titles, NSArray *keywords, NSString *reply, NSError *err) {
         if (err || (!titles.count && !keywords.count)) {
-            [self finishChatWithApps:@[] reply:T(@"chat.llm_error")];
+            [self finishChatWithApps:@[] reply:T(@"chat.llm_unavailable")];
             return;
         }
         [self runCatalogSearchWithTitles:titles

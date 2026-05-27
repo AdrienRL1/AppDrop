@@ -114,6 +114,14 @@
 "install.error.5xx_generic" = "Serverfehler HTTP %ld";
 "install.error.http_generic" = "HTTP %ld";
 "install.error.network" = "Netzwerkfehler";
+"unit.b" = "B";
+"unit.kb" = "KB";
+"unit.mb" = "MB";
+"unit.gb" = "GB";
+"install.modern_ios_msg" = "Diese iOS-Version unterstützt ipainstaller nicht. Die .ipa wurde gespeichert in:\n%@\nÖffne sie in Filza oder iFile zur manuellen Installation.";
+"install.kept_after_fail" = "Installation fehlgeschlagen. Die .ipa wurde behalten:\n%@\nDu kannst sie manuell über Filza oder iFile installieren.";
+"install.state.saved_for_manual" = "Gespeichert (in Filza öffnen)";
+"chat.llm_unavailable" = "KI-Dienst nicht verfügbar. Pollinations.ai ist möglicherweise vorübergehend offline — bitte in einigen Minuten erneut versuchen.";
 "install.error.no_ipainstaller" = "ipainstaller nicht gefunden. Installieren Sie das Paket « IPA Installer Console » aus Cydia/Sileo (Suche: appinst oder ipainstaller).";
 "install.error.spawn_failed" = "posix_spawn(%s) fehlgeschlagen: %s";
 "install.error.install_failed" = "Installation fehlgeschlagen (Exit %d): %@";
@@ -172,3 +180,33 @@
 "onboarding.catalog_quality_msg" = "Der Upstream-Katalog enthält einen kleinen Anteil von Apps mit falschem Titel oder Symbol — das liegt nicht in unserer Hand (Datenproblem bei stuffed18.github.io, nicht in der App). Der .ipa-Dateiname unter jeder App zeigt, was tatsächlich installiert wird. Bitte vor dem Installieren überprüfen, ob es die gewünschte App ist.";
 "common.understood" = "Verstanden";
 "filter.footer.sort" = "Tippen Sie erneut auf die ausgewählte Option, um zwischen aufsteigend und absteigend zu wechseln.";
+
+/* ===== v1.2 — Mirror retry on slow download ===== */
+"install.state.retrying_mirror" = "Mirror langsam — neuer Versuch (%d/%d)…";
+
+/* ===== v1.2 build 8 — Pre-install FairPlay encryption check ===== */
+"install.error.fairplay" = "Diese .ipa ist noch FairPlay-verschlüsselt — an die Apple ID gebunden, mit der sie im App Store gekauft wurde, und läuft daher nicht auf Ihrem Gerät. Versuchen Sie einen anderen Mirror aus der Versionen-Liste (der Katalog hat oft mehrere Quellen für dieselbe App).";
+
+/* ===== v1.2 build 9 — Parallel chunked downloads ===== */
+"settings.section_download" = "Download";
+"settings.parallel_streams" = "Parallele Streams";
+"settings.parallel_streams_footer" = "archive.org drosselt pro TCP-Verbindung. Wenn man einen Download in mehrere parallele Teile (mit je einer eigenen Verbindung) aufteilt, lässt sich die Geschwindigkeit oft um das 3-4-fache steigern. 4 ist der typische optimale Wert — höher hilft selten und kann dazu führen, dass alle Streams zusammen gedrosselt werden. 1 deaktiviert die Funktion.";
+"settings.streams_off" = "1 (einzelner Stream)";
+"settings.streams_n" = "%ld parallele Streams";
+
+/* ===== v1.2 build 9 — Download-Fehlermeldungen (zuvor hartkodiert) ===== */
+"install.error.open_final" = "Die finale .ipa-Datei konnte nicht angelegt werden (Speicher voll oder Sandbox-Einschränkung?)";
+"install.error.open_chunk" = "Chunk-Datei %@ konnte nicht gelesen werden";
+"install.error.concat_write" = "Schreiben beim Zusammenfügen der Chunks fehlgeschlagen (Speicher voll?)";
+"install.error.no_headers" = "Keine HTTP-Header vom Server empfangen";
+"install.error.redirect_no_location" = "HTTP %ld Weiterleitung ohne Location-Header";
+
+/* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
+"settings.section_archive" = "Archive.org-Konto";
+"settings.section_archive_footer" = "Optional. Melden Sie sich mit Ihrem archive.org-Konto an, um die IP-basierte Drosselung beim Herunterladen möglicherweise zu reduzieren. Holen Sie Ihre S3-Schlüssel unter: archive.org/account/s3.php";
+"settings.archive_email" = "E-Mail";
+"settings.archive_access_key" = "Zugangsschlüssel (Access Key)";
+"settings.archive_secret_key" = "Geheimer Schlüssel (Secret Key)";
+"settings.archive_not_set" = "Nicht festgelegt";
+"settings.archive_help" = "Schlüssel holen unter archive.org/account/s3.php. Leer lassen zum Löschen.";
+"settings.archive_save" = "Speichern";
