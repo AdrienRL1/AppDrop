@@ -22,7 +22,7 @@
   - `IPA Installer Console` (by autopear) — most common
   - `appinst` (`ai.akemi.appinst`) — newer variant
 
-> 💡 If you can already install `.ipa` files on your device (manually or via Filza), you have everything you need.
+> 💡 If you can already install `.ipa` files on your device (manually or via your jailbreak's file manager — **iFile** on iOS 5–7, **Filza** on iOS 8+), you have everything you need.
 
 ## Features
 
@@ -49,8 +49,8 @@
      scp AppDrop-vX.Y.ipa root@<device-ip>:/var/mobile/Documents/
      ```
    - **USB file manager from your computer** — [iMazing](https://imazing.com/), [iFunbox](https://www.i-funbox.com/), [3uTools](https://www.3u.com/) and similar tools let you browse the device's filesystem over USB and drop files in directly. Works on every supported iOS version.
-   - **Cloud storage app on the device** — Dropbox, Google Drive, Mega, etc. (available from the App Store on iOS 6+). Upload from your computer, download on the device, open the `.ipa` in Filza.
-   - **Email attachment** — mail yourself the `.ipa`, open the attachment on the device, "Open in… Filza".
+   - **Cloud storage app on the device** — Dropbox, Google Drive, Mega, etc. (available from the App Store on iOS 6+). Upload from your computer, download on the device, then open the `.ipa` in your jailbreak file manager (**iFile** on iOS 5–7, **Filza** on iOS 8+).
+   - **Email attachment** — mail yourself the `.ipa`, open the attachment on the device, "Open in…" → **iFile** (iOS 5–7) or **Filza** (iOS 8+).
    - **AirDrop** — *iOS 8 + macOS Yosemite or later only*. Works on iPhone 5S / iPad Air / iPad mini 2 and newer running iOS 8 or 9. Not available on iOS 6 or iOS 7 (no Mac ↔ iOS AirDrop in those versions).
    - **iCloud Drive** — *iOS 8+ only*, same caveat as AirDrop.
 
