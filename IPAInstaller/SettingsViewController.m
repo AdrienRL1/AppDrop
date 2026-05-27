@@ -49,10 +49,10 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     self.title = T(@"settings.title");
     self.view.backgroundColor = [IOS6Theme groupedBackgroundColor];
 
-    self.navigationItem.leftBarButtonItem =
-        [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
-                                                       target:self
-                                                       action:@selector(doneTapped)];
+    // No leftBarButtonItem: Settings is a root tab (see AppDelegate), never
+    // presented modally, so a "Done" button would have nothing to dismiss
+    // back to. (Earlier builds had one as a leftover from when Settings was
+    // a modal — removed in v1.2 build 11 after Reddit feedback.)
 
     self.table = [[UITableView alloc] initWithFrame:self.view.bounds
                                                 style:UITableViewStyleGrouped];
@@ -60,10 +60,6 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     self.table.delegate = self;
     self.table.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.table];
-}
-
-- (void)doneTapped {
-    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - Table
