@@ -70,7 +70,7 @@ Author: AdrienRL
 Description: Vintage IPA installer for jailbroken iOS 6+. Browse a 157k app catalog (2008-2014) hosted on archive.org and install with one tap. Built-in multilingual AI search.
 Section: Utilities
 Priority: optional
-Homepage: https://github.com/AdrienRL1/adrienrl
+Homepage: https://github.com/AdrienRL1/AppDrop
 Depends: com.autopear.installipa | ai.akemi.appinst | ipainstaller | appinst
 EOF
 
@@ -188,14 +188,14 @@ Author: AdrienRL
 Description: $DESC_TEXT
 Section: Utilities
 Priority: optional
-Homepage: https://github.com/AdrienRL1/adrienrl
+Homepage: https://github.com/AdrienRL1/AppDrop
 Depends: com.autopear.installipa | ai.akemi.appinst | ipainstaller | appinst
 Filename: debs/$(basename "$DEB_FILE")
 Size: $SIZE
 MD5sum: $MD5
 SHA1: $SHA1
 SHA256: $SHA256
-Icon: https://adrienrl1.github.io/adrienrl/CydiaIcon.png
+Icon: https://adrienrl1.github.io/AppDrop/CydiaIcon.png
 EOF
 
 gzip -9c docs/Packages > docs/Packages.gz

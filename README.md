@@ -38,7 +38,7 @@
 
 1. **Verify the helper is installed.** Open **Cydia**, search for `IPA Installer Console`. If it doesn't say *Installed*, tap **Install**.
 
-2. **Download the IPA.** Grab the latest `AppDrop-v*.ipa` from the [Releases page](https://github.com/AdrienRL1/adrienrl/releases) on your computer.
+2. **Download the IPA.** Grab the latest `AppDrop-v*.ipa` from the [Releases page](https://github.com/AdrienRL1/AppDrop/releases) on your computer.
 
 3. **Transfer it to your device.** Easiest way: AirDrop the `.ipa` from your Mac to the iPad / iPhone. Alternative: SSH+`scp`, iCloud Drive, or any cloud storage app.
 
@@ -106,8 +106,8 @@ AppDrop downgrades archive.org requests from `https://` to `http://` to bypass F
 Requires the [Theos](https://theos.dev) cross-compile toolchain on macOS.
 
 ```bash
-git clone https://github.com/AdrienRL1/adrienrl.git
-cd adrienrl
+git clone https://github.com/AdrienRL1/AppDrop.git
+cd AppDrop
 export THEOS=$HOME/theos
 
 # One-time: build mbedTLS for armv7 (or use the prebuilt libs in deps/build/)
