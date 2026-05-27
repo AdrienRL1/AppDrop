@@ -45,7 +45,7 @@
 "app.no_url_msg" = "Cette app n'a pas d'URL valide.";
 
 /* ===== Install (root) screen ===== */
-"install.title" = "Installer une IPA";
+"install.title" = "Installer";
 "install.clear" = "Vider";
 "install.url_label" = "URL de l'IPA (https:// ou itms-services://)";
 "install.url_placeholder" = "https://archive.org/.../app.ipa";

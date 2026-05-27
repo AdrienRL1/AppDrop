@@ -7,6 +7,7 @@
 #import "ChatViewController.h"
 #import "SettingsViewController.h"
 #import "Localization.h"
+#import "UpdateChecker.h"
 
 @implementation AppDelegate
 
@@ -58,6 +59,18 @@
         [self application:application openURL:launchURL sourceApplication:nil annotation:nil];
     }
 
+    // v1.2.1.1: red "1" badge on the Settings tab when an update is available.
+    // We observe UpdateChecker so it auto-updates as the status changes
+    // (e.g., user opens Settings → fresh check fires → badge flips on).
+    // Cache TTL inside UpdateChecker is 1 h so the launch check is cheap
+    // even if the user re-launches the app frequently.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                              selector:@selector(refreshSettingsTabBadge)
+                                                  name:UpdateCheckerStatusChangedNotification
+                                                object:nil];
+    [self refreshSettingsTabBadge];  // initial state (probably no badge yet)
+    [[UpdateChecker shared] checkForUpdates:NO];
+
     // v2.0.9 — show the catalog-quality reminder at every cold launch. The upstream
     // catalog has a small fraction of rows with wrong title or icon (out of our control,
     // it's a data issue at stuffed18.github.io). The user explicitly asked for this to
@@ -82,6 +95,21 @@
 - (BOOL)application:(UIApplication *)application openURL:(NSURL *)url
    sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
     return NO;
+}
+
+// v1.2.1.1: Sync the Settings tab's UITabBarItem badge with UpdateChecker.status.
+// Called both from the UpdateCheckerStatusChangedNotification observer and once
+// during didFinishLaunchingWithOptions so the badge is correct from the first
+// frame even before the launch update check completes.
+- (void)refreshSettingsTabBadge {
+    UITabBarController *tabs = (UITabBarController *)self.window.rootViewController;
+    if (![tabs isKindOfClass:[UITabBarController class]]) return;
+    if (tabs.viewControllers.count < 5) return;  // sanity — should be 5 tabs
+    // Settings is tab index 4 (catalog/search/ai/install/settings).
+    UIViewController *settingsNav = tabs.viewControllers[4];
+    UpdateChecker *uc = [UpdateChecker shared];
+    settingsNav.tabBarItem.badgeValue =
+        (uc.status == UpdateCheckerStatusAvailable) ? @"1" : nil;
 }
 
 // Kept as a private helper in case future code needs to surface a system-wide alert
