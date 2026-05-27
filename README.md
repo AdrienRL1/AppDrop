@@ -7,6 +7,12 @@
 </p>
 
 <p align="center">
+  <a href="https://paypal.me/adrienrl1"><b>💖 Like AppDrop? Tip the dev on PayPal</b></a>
+  <br>
+  <sub>(pick "Send to a friend" to skip the PayPal fee)</sub>
+</p>
+
+<p align="center">
   <img src="screenshots/screenshot-11.png" width="600" alt="AppDrop catalog grid on iPad">
 </p>
 
