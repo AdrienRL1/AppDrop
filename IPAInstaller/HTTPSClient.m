@@ -99,19 +99,33 @@ static int sock_recv(void *ctx, unsigned char *buf, size_t len) {
     } else {
         NSString *p = [pathQuery substringToIndex:queryStart.location];
         NSString *q = [pathQuery substringFromIndex:NSMaxRange(queryStart)];
-        // Query: spaces become %20 (or +), other unsafe chars %-encoded
-        NSCharacterSet *querySafe = [NSCharacterSet characterSetWithCharactersInString:
-            @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~&=:@/?"];
-        NSMutableString *encQ = [NSMutableString stringWithCapacity:q.length];
-        NSData *qbytes = [q dataUsingEncoding:NSUTF8StringEncoding];
-        const unsigned char *qp = qbytes.bytes;
-        for (NSUInteger i = 0; i < qbytes.length; i++) {
-            unsigned char c = qp[i];
-            if (c < 128 && [querySafe characterIsMember:c]) {
-                [encQ appendFormat:@"%c", c];
-            } else {
-                [encQ appendFormat:@"%%%02X", c];
+
+        // CRITICAL: if the query already contains %-encoded chars, treat it as
+        // already-encoded and pass through verbatim. Otherwise we'd re-encode
+        // % itself → %3A becomes %253A, invalidating any signature. This bites
+        // hard on GitHub release downloads, where github.com 302-redirects to
+        // a signed URL on release-assets.githubusercontent.com (Azure Blob) with
+        // SAS query params like `sig=...%2F...`, `se=...%3A...`. Double-encoding
+        // those broke the signature → Azure returned 403 → in-app updater failed.
+        NSString *encQ;
+        if ([q rangeOfString:@"%"].location != NSNotFound) {
+            encQ = q;
+        } else {
+            // Query has no %-encoded chars yet — encode unsafe ones the standard way.
+            NSCharacterSet *querySafe = [NSCharacterSet characterSetWithCharactersInString:
+                @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~&=:@/?"];
+            NSMutableString *enc = [NSMutableString stringWithCapacity:q.length];
+            NSData *qbytes = [q dataUsingEncoding:NSUTF8StringEncoding];
+            const unsigned char *qp = qbytes.bytes;
+            for (NSUInteger i = 0; i < qbytes.length; i++) {
+                unsigned char c = qp[i];
+                if (c < 128 && [querySafe characterIsMember:c]) {
+                    [enc appendFormat:@"%c", c];
+                } else {
+                    [enc appendFormat:@"%%%02X", c];
+                }
             }
+            encQ = enc;
         }
         encodedPathQuery = [NSString stringWithFormat:@"%@?%@",
                               [self percentEncodePath:p], encQ];
