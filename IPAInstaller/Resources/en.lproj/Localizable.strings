@@ -209,6 +209,25 @@
 "install.error.no_headers" = "No HTTP headers received from server";
 "install.error.redirect_no_location" = "Redirect HTTP %ld with no Location header";
 
+/* ===== v1.2 build 13 — In-app updater (Settings → Updates section) ===== */
+"settings.section_updates" = "Updates";
+"settings.installed_version" = "Installed";
+"settings.latest_release" = "Latest release";
+"settings.checking" = "Checking…";
+"settings.tap_to_check" = "Tap to check";
+"settings.check_failed" = "Check failed — tap to retry";
+"settings.install_update_to" = "Install v%@ ↓";
+"settings.install_update_title" = "Install update?";
+"settings.install_update_msg" = "Download and install AppDrop v%@ (released %@)? The download will run in the Install tab. The app will quit during the upgrade; re-launch from the home screen when done.";
+"settings.install_action" = "Install";
+"settings.update_started_title" = "Update started";
+"settings.update_started_msg" = "Switch to the Install tab to follow the download. AppDrop will quit when ipainstaller takes over.";
+"settings.updates_footer_initial" = "Tap «Latest release» to check the GitHub repository for a newer version.";
+"settings.updates_footer_checked" = "Last checked: %@. Tap «Latest release» to refresh.";
+"settings.last_checked_just_now" = "just now";
+"settings.last_checked_minutes" = "%ld min ago";
+"settings.last_checked_hours" = "%ld h ago";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org account";
 "settings.section_archive_footer" = "Optional. Sign in with your archive.org account to potentially reduce per-IP rate limiting on downloads. Get your S3 keys at: archive.org/account/s3.php";

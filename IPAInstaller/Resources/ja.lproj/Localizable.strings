@@ -201,6 +201,25 @@
 "install.error.no_headers" = "サーバーから HTTP ヘッダーを受信できませんでした";
 "install.error.redirect_no_location" = "HTTP %ld のリダイレクトに Location ヘッダーがありません";
 
+/* ===== v1.2 build 13 — アプリ内アップデーター (設定 → アップデート) ===== */
+"settings.section_updates" = "アップデート";
+"settings.installed_version" = "インストール済み";
+"settings.latest_release" = "最新バージョン";
+"settings.checking" = "確認中…";
+"settings.tap_to_check" = "タップして確認";
+"settings.check_failed" = "確認に失敗しました — タップして再試行";
+"settings.install_update_to" = "v%@ をインストール ↓";
+"settings.install_update_title" = "アップデートをインストール？";
+"settings.install_update_msg" = "AppDrop v%@ (%@ 公開) をダウンロードしてインストールしますか？ ダウンロードはインストールタブで実行されます。アップデート中にアプリは終了します。完了後、ホーム画面から再起動してください。";
+"settings.install_action" = "インストール";
+"settings.update_started_title" = "アップデート開始";
+"settings.update_started_msg" = "インストールタブに切り替えてダウンロードを確認してください。ipainstaller が引き継ぐと AppDrop は終了します。";
+"settings.updates_footer_initial" = "「最新バージョン」をタップして、GitHub リポジトリに新しいバージョンがあるか確認します。";
+"settings.updates_footer_checked" = "最終確認: %@。「最新バージョン」をタップして更新。";
+"settings.last_checked_just_now" = "たった今";
+"settings.last_checked_minutes" = "%ld 分前";
+"settings.last_checked_hours" = "%ld 時間前";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org アカウント";
 "settings.section_archive_footer" = "オプション。archive.org アカウントでサインインすると、ダウンロードの IP 別レート制限が緩和される可能性があります。S3 キーは次のページで取得: archive.org/account/s3.php";

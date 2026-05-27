@@ -201,6 +201,25 @@
 "install.error.no_headers" = "Nenhum header HTTP recebido do servidor";
 "install.error.redirect_no_location" = "Redirecionamento HTTP %ld sem header Location";
 
+/* ===== v1.2 build 13 — Atualizador no app (Ajustes → Atualizações) ===== */
+"settings.section_updates" = "Atualizações";
+"settings.installed_version" = "Instalada";
+"settings.latest_release" = "Última versão";
+"settings.checking" = "Verificando…";
+"settings.tap_to_check" = "Toque para verificar";
+"settings.check_failed" = "Verificação falhou — toque para tentar novamente";
+"settings.install_update_to" = "Instalar v%@ ↓";
+"settings.install_update_title" = "Instalar a atualização?";
+"settings.install_update_msg" = "Baixar e instalar o AppDrop v%@ (lançado em %@)? O download será executado na aba Instalar. O app vai encerrar durante a atualização; reabra a partir da tela inicial quando terminar.";
+"settings.install_action" = "Instalar";
+"settings.update_started_title" = "Atualização iniciada";
+"settings.update_started_msg" = "Vá até a aba Instalar para acompanhar o download. O AppDrop será encerrado quando o ipainstaller assumir.";
+"settings.updates_footer_initial" = "Toque em «Última versão» para verificar no repositório do GitHub se há uma versão mais recente.";
+"settings.updates_footer_checked" = "Última verificação: %@. Toque em «Última versão» para atualizar.";
+"settings.last_checked_just_now" = "agora mesmo";
+"settings.last_checked_minutes" = "há %ld min";
+"settings.last_checked_hours" = "há %ld h";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Conta archive.org";
 "settings.section_archive_footer" = "Opcional. Entre com sua conta do archive.org para reduzir potencialmente a limitação por IP nos downloads. Obtenha suas chaves S3 em: archive.org/account/s3.php";

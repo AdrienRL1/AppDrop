@@ -201,6 +201,25 @@
 "install.error.no_headers" = "未从服务器收到 HTTP 头";
 "install.error.redirect_no_location" = "HTTP %ld 重定向缺少 Location 头";
 
+/* ===== v1.2 build 13 — 应用内更新器 (设置 → 更新) ===== */
+"settings.section_updates" = "更新";
+"settings.installed_version" = "已安装";
+"settings.latest_release" = "最新版本";
+"settings.checking" = "检查中…";
+"settings.tap_to_check" = "点按检查";
+"settings.check_failed" = "检查失败 — 点按重试";
+"settings.install_update_to" = "安装 v%@ ↓";
+"settings.install_update_title" = "安装更新？";
+"settings.install_update_msg" = "下载并安装 AppDrop v%@ (发布于 %@)？ 下载将在「安装」标签页中进行。更新期间应用会退出；完成后从主屏幕重新启动。";
+"settings.install_action" = "安装";
+"settings.update_started_title" = "更新已开始";
+"settings.update_started_msg" = "切换到「安装」标签页查看下载进度。当 ipainstaller 接管时，AppDrop 将退出。";
+"settings.updates_footer_initial" = "点按「最新版本」以在 GitHub 仓库中检查是否有更新的版本。";
+"settings.updates_footer_checked" = "上次检查: %@。点按「最新版本」以刷新。";
+"settings.last_checked_just_now" = "刚刚";
+"settings.last_checked_minutes" = "%ld 分钟前";
+"settings.last_checked_hours" = "%ld 小时前";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org 账户";
 "settings.section_archive_footer" = "可选。使用你的 archive.org 账户登录，可能会减少下载时的按 IP 限速。获取 S3 密钥地址: archive.org/account/s3.php";

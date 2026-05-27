@@ -5,6 +5,7 @@
 #import "NetworkClient.h"
 #import "HTTPSClient.h"
 #import "Localization.h"
+#import "UpdateChecker.h"
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -13,11 +14,12 @@ extern char **environ;
 
 typedef NS_ENUM(NSInteger, SettingsSection) {
     SectionLanguage = 0,
-    SectionDownload = 1,  // v1.2 build 9 — parallel-streams picker
-    SectionArchive  = 2,  // archive.org S3 credentials (optional, can help with throttling)
-    SectionDiag     = 3,  // HTTPS test + ipainstaller spawn test
-    SectionCache    = 4,
-    SectionAbout    = 5,
+    SectionUpdates  = 1,  // v1.2 build 13 — in-app updater
+    SectionDownload = 2,  // v1.2 build 9 — parallel-streams picker
+    SectionArchive  = 3,  // archive.org S3 credentials (optional, can help with throttling)
+    SectionDiag     = 4,  // HTTPS test + ipainstaller spawn test
+    SectionCache    = 5,
+    SectionAbout    = 6,
     SectionsCount
 };
 
@@ -60,6 +62,34 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     self.table.delegate = self;
     self.table.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.table];
+
+    // Live-refresh the Updates section when UpdateChecker reports a new
+    // state (e.g. background check completes after we already showed the
+    // "Checking…" cell).
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                              selector:@selector(updateCheckerChanged:)
+                                                  name:UpdateCheckerStatusChangedNotification
+                                                object:nil];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+    [super viewDidAppear:animated];
+    // Kick a background check if our cached info is stale (>1h) or absent.
+    // This is non-blocking — the UI shows "Tap to check" or the last-known
+    // value until the response arrives.
+    [[UpdateChecker shared] checkForUpdates:NO];
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+}
+
+- (void)updateCheckerChanged:(NSNotification *)note {
+    // Reload just the Updates section to avoid flickering the rest of the
+    // table (Archive cells, About cells, etc.).
+    if (!self.table) return;
+    [self.table reloadSections:[NSIndexSet indexSetWithIndex:SectionUpdates]
+              withRowAnimation:UITableViewRowAnimationNone];
 }
 
 #pragma mark - Table
@@ -68,8 +98,9 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)s {
     if (s == SectionLanguage) return 1;
+    if (s == SectionUpdates) return 2;   // installed version + latest release
     if (s == SectionDownload) return 1;  // parallel streams
-    if (s == SectionArchive) return 3;  // email + access key + secret key
+    if (s == SectionArchive) return 3;   // email + access key + secret key
     if (s == SectionDiag) return 2;
     if (s == SectionCache) return 1;
     if (s == SectionAbout) return 6;
@@ -78,6 +109,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 
 - (NSString *)tableView:(UITableView *)tv titleForHeaderInSection:(NSInteger)s {
     if (s == SectionLanguage) return T(@"settings.language");
+    if (s == SectionUpdates) return T(@"settings.section_updates");
     if (s == SectionDownload) return T(@"settings.section_download");
     if (s == SectionArchive) return T(@"settings.section_archive");
     if (s == SectionDiag) return T(@"settings.section_diagnostics");
@@ -87,6 +119,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 }
 
 - (NSString *)tableView:(UITableView *)tv titleForFooterInSection:(NSInteger)s {
+    if (s == SectionUpdates) return [self updatesSectionFooter];
     if (s == SectionDownload) return T(@"settings.parallel_streams_footer");
     if (s == SectionArchive) return T(@"settings.section_archive_footer");
     if (s == SectionDiag) return T(@"settings.section_diagnostics_footer");
@@ -118,6 +151,47 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
                                           [Localization displayNameForLanguageCode:[Localization currentLanguageCode]]];
         }
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    } else if (ip.section == SectionUpdates) {
+        cell.textLabel.textColor = [UIColor blackColor];
+        cell.textLabel.font = [UIFont systemFontOfSize:14];
+        UpdateChecker *uc = [UpdateChecker shared];
+        if (ip.row == 0) {
+            // Read-only installed-version row.
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            cell.textLabel.text = T(@"settings.installed_version");
+            cell.detailTextLabel.text = [NSString stringWithFormat:@"v%@ (build %ld)",
+                                            [uc currentVersion], (long)[uc currentBuild]];
+        } else {
+            // Latest-release row — dynamic based on UpdateChecker.status.
+            // - Available: blue tint, "Install vX.Y" + date
+            // - UpToDate:  "vX.Y (Mmm dd, yyyy) ✓"
+            // - Checking:  "Checking…"
+            // - Error:     "Check failed — tap to retry"
+            // - Unknown:   "Tap to check"
+            UpdateCheckerStatus s = uc.status;
+            if (s == UpdateCheckerStatusAvailable) {
+                cell.textLabel.text = [NSString stringWithFormat:T(@"settings.install_update_to"),
+                                          uc.latestVersion];
+                cell.textLabel.textColor = [IOS6Theme primaryBlue];
+                cell.textLabel.font = [UIFont boldSystemFontOfSize:14];
+                cell.detailTextLabel.text = [self formattedDate:uc.latestReleaseDate];
+            } else if (s == UpdateCheckerStatusUpToDate) {
+                cell.textLabel.text = T(@"settings.latest_release");
+                cell.detailTextLabel.text = [NSString stringWithFormat:@"v%@ (%@) ✓",
+                                                uc.latestVersion,
+                                                [self formattedDate:uc.latestReleaseDate]];
+            } else if (s == UpdateCheckerStatusChecking) {
+                cell.textLabel.text = T(@"settings.latest_release");
+                cell.detailTextLabel.text = T(@"settings.checking");
+            } else if (s == UpdateCheckerStatusError) {
+                cell.textLabel.text = T(@"settings.latest_release");
+                cell.detailTextLabel.text = T(@"settings.check_failed");
+            } else {
+                cell.textLabel.text = T(@"settings.latest_release");
+                cell.detailTextLabel.text = T(@"settings.tap_to_check");
+            }
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        }
     } else if (ip.section == SectionDownload) {
         cell.textLabel.text = T(@"settings.parallel_streams");
         cell.textLabel.textColor = [UIColor blackColor];
@@ -202,6 +276,10 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
         [self showLanguagePicker];
         return;
     }
+    if (ip.section == SectionUpdates) {
+        if (ip.row == 1) [self handleUpdatesRowTap];
+        return;
+    }
     if (ip.section == SectionDownload) {
         [self showParallelStreamsPicker];
         return;
@@ -269,6 +347,13 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 }
 
 - (void)alertView:(UIAlertView *)alert clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (alert.tag == 101) {
+        // Install-update confirmation
+        if (buttonIndex != alert.cancelButtonIndex) {
+            [self installUpdateConfirmed];
+        }
+        return;
+    }
     if (alert.tag != 100) return;
     if (buttonIndex == alert.cancelButtonIndex) return;
     UITextField *tf = [alert textFieldAtIndex:0];
@@ -379,6 +464,104 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
                                                 cancelButtonTitle:T(@"common.ok")
                                                 otherButtonTitles:nil];
         [result show];
+    }];
+}
+
+#pragma mark - Updates section (v1.2 build 13)
+
+// Footer copy below the Updates section. Either "Last checked: <relative time>"
+// or instructional text when we've never checked.
+- (NSString *)updatesSectionFooter {
+    UpdateChecker *uc = [UpdateChecker shared];
+    if (!uc.lastCheckedAt) {
+        return T(@"settings.updates_footer_initial");
+    }
+    NSTimeInterval ago = -[uc.lastCheckedAt timeIntervalSinceNow];
+    NSString *whenAgo;
+    if (ago < 60) {
+        whenAgo = T(@"settings.last_checked_just_now");
+    } else if (ago < 3600) {
+        whenAgo = [NSString stringWithFormat:T(@"settings.last_checked_minutes"),
+                     (long)(ago / 60)];
+    } else if (ago < 86400) {
+        whenAgo = [NSString stringWithFormat:T(@"settings.last_checked_hours"),
+                     (long)(ago / 3600)];
+    } else {
+        whenAgo = [self formattedDate:uc.lastCheckedAt];
+    }
+    return [NSString stringWithFormat:T(@"settings.updates_footer_checked"), whenAgo];
+}
+
+// Locale-aware medium date format ("May 27, 2026" / "27 mai 2026" / "2026年5月27日" etc.).
+- (NSString *)formattedDate:(NSDate *)date {
+    if (!date) return @"?";
+    static NSDateFormatter *fmt = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        fmt = [[NSDateFormatter alloc] init];
+        fmt.dateStyle = NSDateFormatterMediumStyle;
+        fmt.timeStyle = NSDateFormatterNoStyle;
+        // Locale defaults to user's current locale — already what we want.
+    });
+    return [fmt stringFromDate:date];
+}
+
+// Tap on the "Latest release" row dispatches based on current state:
+//   - Available  → confirm + install
+//   - Up to date → re-check (force)
+//   - Error      → re-check (force)
+//   - Checking   → no-op (already in flight)
+//   - Unknown    → trigger first check
+- (void)handleUpdatesRowTap {
+    UpdateChecker *uc = [UpdateChecker shared];
+    if (uc.status == UpdateCheckerStatusChecking) return;
+    if (uc.status == UpdateCheckerStatusAvailable && uc.latestIpaURL.length) {
+        // Confirm before kicking off the install — it'll run via the normal
+        // InstallManager flow (parallel chunks + Range resume + FairPlay check
+        // + ipainstaller for iOS 6-9 or Documents save for iOS 10+).
+        NSString *msg = [NSString stringWithFormat:T(@"settings.install_update_msg"),
+                            uc.latestVersion,
+                            [self formattedDate:uc.latestReleaseDate]];
+        UIAlertView *alert = [[UIAlertView alloc]
+            initWithTitle:T(@"settings.install_update_title")
+                  message:msg
+                 delegate:self
+        cancelButtonTitle:T(@"common.cancel")
+        otherButtonTitles:T(@"settings.install_action"), nil];
+        alert.tag = 101;  // distinguish from Archive prompts (tag 100)
+        [alert show];
+        return;
+    }
+    // Any other state → re-check.
+    [uc checkForUpdates:YES];
+}
+
+// Continues UIAlertView dispatch already wired for archive credentials.
+// alert.tag 101 = "install update" confirmation.
+- (void)installUpdateConfirmed {
+    UpdateChecker *uc = [UpdateChecker shared];
+    NSString *url = uc.latestIpaURL;
+    if (!url.length) return;
+    [[InstallManager shared] startInstallWithURL:url
+                                       completion:^(NSString *jobId, NSError *err) {
+        if (err) {
+            UIAlertView *a = [[UIAlertView alloc]
+                initWithTitle:T(@"common.error")
+                      message:err.localizedDescription
+                     delegate:nil
+            cancelButtonTitle:T(@"common.ok")
+            otherButtonTitles:nil];
+            [a show];
+            return;
+        }
+        // Tell the user where to watch progress.
+        UIAlertView *a = [[UIAlertView alloc]
+            initWithTitle:T(@"settings.update_started_title")
+                  message:T(@"settings.update_started_msg")
+                 delegate:nil
+        cancelButtonTitle:T(@"common.ok")
+        otherButtonTitles:nil];
+        [a show];
     }];
 }
 
