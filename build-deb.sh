@@ -54,10 +54,13 @@ Description: Vintage IPA installer for jailbroken iOS 6+. Browse a 157k app cata
 Section: Utilities
 Priority: optional
 Homepage: https://github.com/AdrienRL1/adrienrl
-Depends: ipainstaller | appinst
-Conflicts: ca.adrien.ipainstaller
-Replaces: ca.adrien.ipainstaller
 EOF
+# Note: no Depends: line. We need /usr/bin/ipainstaller at runtime to install IPAs,
+# but the Cydia package providing it has different names across repos (com.autopear.installipa,
+# net.angelxwind.appsyncunified, ipainstaller, appinst, etc.). Declaring a strict Depends
+# blocks install on devices that have the helper under a different package name. The app
+# does its own runtime check + shows a friendly "install ipainstaller from Cydia" message
+# via T(@"install.error.no_ipainstaller") when the binary is absent.
 
 # Postinst — respring SpringBoard after install so the icon appears.
 cat > "$STAGE/DEBIAN/postinst" <<'EOF'
@@ -127,7 +130,6 @@ Description: $DESC_TEXT
 Section: Utilities
 Priority: optional
 Homepage: https://github.com/AdrienRL1/adrienrl
-Depends: ipainstaller | appinst
 Filename: debs/$(basename "$DEB_FILE")
 Size: $SIZE
 MD5sum: $MD5
