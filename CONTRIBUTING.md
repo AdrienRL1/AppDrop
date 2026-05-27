@@ -17,7 +17,8 @@ AppDrop is a personal project I maintain in my spare time. I'm not a professiona
 | **Translation fixes** | small, text only | ⭐ very safe — native speakers welcome to clean up the 7 `.lproj/Localizable.strings` files |
 | **Bug reports** (Issues) | none | ⭐ ideal — even just a clear "X is broken on iOS 9, here's what I see" |
 | **Documentation** (README, comments, typos) | small | ⭐ very safe |
-| **iOS 10 testing & fixes** | medium | ⭐ valuable — I don't have an iOS 10 device |
+| **iOS 10 testing & fixes** | medium | ⭐ wanted — I don't have an iOS 10 device, so the iOS 10 path (skip `ipainstaller`, save `.ipa` to `Documents/AppDrop/` for Filza-based install) is marked experimental in the README. Anyone with an iOS 10 jailbreak who can confirm the flow works (or report what breaks) is very welcome. |
+| **iOS 5 / iPad 1 support reinstatement** | high | ⭐ welcome — dropped in v2.0.22 due to (a) the iOS 5 Obj-C runtime missing modern subscript dispatch (`dict[@"key"]`, `@(42)`, `@{}` literals), and (b) the iOS 5 sandbox blocking `posix_spawn` from the app bundle into `/usr/bin/ipainstaller` without a `platform-application` entitlement injected at install time. Both are technically fixable (runtime shim + entitlement-injecting postinst) — if you have a working approach, open an Issue first to discuss the integration strategy. |
 | **Small bug fixes with clear scope** | small | ⭐ usually fine if the diff is short and the fix is obvious |
 | **New features** | varies | ⚠️ please open an Issue first to discuss before writing code |
 | **Large refactors** | high | ❌ very unlikely to merge without prior discussion |
