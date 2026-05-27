@@ -9,8 +9,8 @@ Section: Utilities
 Priority: optional
 Homepage: https://github.com/AdrienRL1/adrienrl
 Filename: debs/ca.adrien.appdrop_1.0_iphoneos-arm.deb
-Size: 17291540
-MD5sum: 37e73e8a33df33b9de747b3810c222af
-SHA1: 1e964063dba25bc46db4ab337176c6fcf2153b65
-SHA256: 535e4c056f407dacbc2edef987102b33ba12c7f815bc9f0fc018746cfee1abe5
+Size: 17288616
+MD5sum: deb8abc5e0da10d3399be5283e3e52ed
+SHA1: 2ee3bea892c297ba045fc5b6cedc831d6d30a8a1
+SHA256: 6312853aedbd8ac424ae3c4b8f9865fbf88f3f29ae642b5f5cda128cd0c65158
 Icon: https://adrienrl1.github.io/adrienrl/CydiaIcon.png

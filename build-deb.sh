@@ -97,13 +97,34 @@ mkdir -p "$WORK"
 
 echo "2.0" > "$WORK/debian-binary"
 
-(cd "$STAGE/DEBIAN" && tar --no-mac-metadata -czf "$WORK/control.tar.gz" \
-    --owner=0 --group=0 --numeric-owner ./*) 2>/dev/null || \
-(cd "$STAGE/DEBIAN" && tar -czf "$WORK/control.tar.gz" ./*)
+# === macOS → POSIX-clean tarball ====================================
+# v1.0.1 fix: previous Cydia install failed with
+#   "corrupted filesystem tarfile - corrupted package archive"
+# because macOS's bsdtar embeds extended attributes / file flags /
+# AppleDouble (._*) sidecars / .DS_Store that dpkg on iOS can't parse.
+#
+# Bulletproof recipe:
+#   1. xattr -cr   — strip every extended attribute from the staging dir
+#   2. find … -delete — nuke .DS_Store and ._* leftovers
+#   3. COPYFILE_DISABLE=1 — env var that tells macOS tar not to embed
+#      resource forks via AppleDouble
+#   4. --format=ustar + --no-xattrs + --no-fflags — force the strict
+#      POSIX 1003.1 ustar format with no macOS extensions
+xattr -cr "$STAGE" 2>/dev/null || true
+find "$STAGE" \( -name '.DS_Store' -o -name '._*' \) -delete 2>/dev/null || true
 
-(cd "$STAGE" && tar --no-mac-metadata -czf "$WORK/data.tar.gz" \
-    --owner=0 --group=0 --numeric-owner --exclude=./DEBIAN ./*) 2>/dev/null || \
-(cd "$STAGE" && tar -czf "$WORK/data.tar.gz" --exclude=./DEBIAN ./*)
+COPYFILE_DISABLE=1 tar -C "$STAGE/DEBIAN" \
+    --format=ustar \
+    --uid=0 --gid=0 --numeric-owner \
+    --no-xattrs --no-fflags --no-mac-metadata \
+    -czf "$WORK/control.tar.gz" .
+
+COPYFILE_DISABLE=1 tar -C "$STAGE" \
+    --format=ustar \
+    --uid=0 --gid=0 --numeric-owner \
+    --no-xattrs --no-fflags --no-mac-metadata \
+    --exclude=./DEBIAN \
+    -czf "$WORK/data.tar.gz" .
 
 (cd "$WORK" && ar -rc "$DEB_FILE.tmp" debian-binary control.tar.gz data.tar.gz)
 mv "$DEB_FILE.tmp" "$DEB_FILE"
