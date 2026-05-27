@@ -3,7 +3,7 @@
 > Browse 157,000 archived iOS apps from 2008–2014 and install them on your jailbroken device, with built-in AI search.
 
 <p align="center">
-  <img src="IPAInstaller/Resources/Icon-152.png" width="120" height="120" alt="AppDrop icon">
+  <img src="IPAInstaller/Resources/Icon-144.png" width="120" height="120" alt="AppDrop icon">
 </p>
 
 <p align="center">
