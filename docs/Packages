@@ -8,9 +8,10 @@ Description: Vintage IPA installer for jailbroken iOS 6+. Browse a 157k app cata
 Section: Utilities
 Priority: optional
 Homepage: https://github.com/AdrienRL1/adrienrl
+Depends: com.autopear.installipa | ai.akemi.appinst | ipainstaller | appinst
 Filename: debs/ca.adrien.appdrop_1.0_iphoneos-arm.deb
-Size: 17288616
-MD5sum: deb8abc5e0da10d3399be5283e3e52ed
-SHA1: 2ee3bea892c297ba045fc5b6cedc831d6d30a8a1
-SHA256: 6312853aedbd8ac424ae3c4b8f9865fbf88f3f29ae642b5f5cda128cd0c65158
+Size: 17016474
+MD5sum: 995e35dfb8904fcc1ff0ca39c1054228
+SHA1: 324c6120c8a367d945d0cbadf29b970b73f4d8fa
+SHA256: 1029df5db1692b266e471f2083de9db06dcff80a837631c71f1dcba812a06275
 Icon: https://adrienrl1.github.io/adrienrl/CydiaIcon.png
