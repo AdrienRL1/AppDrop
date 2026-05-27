@@ -122,7 +122,7 @@
 "install.kept_after_fail" = "安装失败。.ipa 已保留在:\n%@\n你可以通过 Filza 或 iFile 手动安装。";
 "install.state.saved_for_manual" = "已保存(用 Filza 打开)";
 "chat.llm_unavailable" = "AI 服务不可用。Pollinations.ai 可能暂时离线 — 请几分钟后重试。";
-"install.error.no_ipainstaller" = "找不到 ipainstaller。请从 Cydia/Sileo 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。";
+"install.error.no_ipainstaller" = "找不到 ipainstaller。请从 Cydia 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。";
 "install.error.spawn_failed" = "posix_spawn(%s) 失败: %s";
 "install.error.install_failed" = "安装失败 (exit %d): %@";
 
@@ -173,7 +173,7 @@
 
 /* ===== Onboarding + sort direction (v2.0.8) ===== */
 "onboarding.ipainstaller_title" = "前置要求";
-"onboarding.ipainstaller_msg" = "要安装 IPA，你需要从 Cydia 或 Sileo 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。没有它，应用无法在本地安装。你已经安装了吗？";
+"onboarding.ipainstaller_msg" = "要安装 IPA，你需要从 Cydia 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。没有它，应用无法在本地安装。你已经安装了吗？";
 "onboarding.ipainstaller_continue" = "是，继续";
 "onboarding.ipainstaller_cancel" = "还没有";
 "onboarding.catalog_quality_title" = "关于目录";

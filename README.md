@@ -18,7 +18,7 @@
 - **iOS 10.x** — *experimental* (untested by the author, feedback welcome). Downloads work normally, but `ipainstaller` is broken on iOS 10 (Apple-side `dyld` regression — silent failures), so AppDrop saves the `.ipa` to its `Documents/AppDrop/` folder and you install manually via Filza or iFile. The path is shown in the install screen when it completes. Documents folder auto-sweeps anything older than 14 days or beyond 500 MB total at launch.
 - **iOS 11+** — not supported. The binary is 32-bit only and Apple dropped 32-bit app support in iOS 11.
 - Compatible devices: iPhone 4S, iPad 2 / 3 / 4 / iPad mini, iPod touch 5 (and 64-bit devices like iPad Air / iPhone 5S running iOS 10.3.3 or lower).
-- Requires a **jailbreak** with one of these helper packages installed from Cydia / Sileo (iOS 6-9 only):
+- Requires a **jailbreak** with one of these helper packages installed from Cydia (iOS 6-9 only):
   - `IPA Installer Console` (by autopear) — most common
   - `appinst` (`ai.akemi.appinst`) — newer variant
 

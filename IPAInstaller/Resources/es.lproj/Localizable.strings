@@ -122,7 +122,7 @@
 "install.kept_after_fail" = "Instalación fallida. El .ipa se conservó en:\n%@\nPuedes instalarlo manualmente con Filza o iFile.";
 "install.state.saved_for_manual" = "Guardado (abrir en Filza)";
 "chat.llm_unavailable" = "Servicio de IA no disponible. Pollinations.ai puede estar temporalmente fuera de línea — inténtalo de nuevo en unos minutos.";
-"install.error.no_ipainstaller" = "ipainstaller no encontrado. Instala el paquete « IPA Installer Console » desde Cydia/Sileo (busca: appinst o ipainstaller).";
+"install.error.no_ipainstaller" = "ipainstaller no encontrado. Instala el paquete « IPA Installer Console » desde Cydia (busca: appinst o ipainstaller).";
 "install.error.spawn_failed" = "posix_spawn(%s) falló: %s";
 "install.error.install_failed" = "Instalación fallida (salida %d): %@";
 
@@ -173,7 +173,7 @@
 
 /* ===== Onboarding + sort direction (v2.0.8) ===== */
 "onboarding.ipainstaller_title" = "Requisito previo";
-"onboarding.ipainstaller_msg" = "Para instalar IPAs necesitas el paquete « IPA Installer Console » desde Cydia o Sileo (busca: appinst o ipainstaller). Sin él, ninguna app puede instalarse localmente. ¿Lo tienes instalado?";
+"onboarding.ipainstaller_msg" = "Para instalar IPAs necesitas el paquete « IPA Installer Console » desde Cydia (busca: appinst o ipainstaller). Sin él, ninguna app puede instalarse localmente. ¿Lo tienes instalado?";
 "onboarding.ipainstaller_continue" = "Sí, continuar";
 "onboarding.ipainstaller_cancel" = "Aún no";
 "onboarding.catalog_quality_title" = "Sobre el catálogo";
