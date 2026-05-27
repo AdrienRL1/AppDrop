@@ -1,8 +1,0 @@
-Origin: AdrienRL
-Label: AppDrop Repo
-Suite: stable
-Version: 1.0
-Codename: appdrop
-Architectures: iphoneos-arm
-Components: main
-Description: AppDrop — vintage IPA installer for jailbroken iOS 6+
