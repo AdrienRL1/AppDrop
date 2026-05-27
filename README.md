@@ -1,107 +1,143 @@
 # AppDrop
 
-Native iOS app for browsing and installing vintage IPA files on jailbroken iOS 6+ devices.
-
-Browses a catalog of **157,000 archived iOS apps (2008–2014)** hosted on archive.org, with built-in AI search, multi-language UI, and direct local install via `ipainstaller`.
+> Browse 157,000 archived iOS apps from 2008–2014 and install them on your jailbroken device, with built-in AI search.
 
 <p align="center">
-<img src="IPAInstaller/Resources/Icon-152.png" width="152" height="152" alt="AppDrop icon">
+  <img src="IPAInstaller/Resources/Icon-152.png" width="120" height="120" alt="AppDrop icon">
 </p>
+
+<p align="center">
+  <img src="screenshots/screenshot-11.png" width="600" alt="AppDrop catalog grid on iPad">
+</p>
+
+---
 
 ## Compatibility
 
 - **iOS 6.0 – 9.3.6** (armv7 / 32-bit)
 - iPhone 4S, iPad 2 / 3 / 4 / iPad mini, iPod touch 5
-- Requires a **jailbreak** + the Cydia / Sileo package **`IPA Installer Console`** (by autopear) or **`AppInst`**
-- iPad 1 (iOS 5.1.1) was supported up to v2.0.21 internal builds, dropped in v1.0 public release because the iOS 5 sandbox blocked auto-install
+- Requires a **jailbreak** with one of these helper packages installed from Cydia / Sileo:
+  - `IPA Installer Console` (by autopear) — most common
+  - `appinst` (`ai.akemi.appinst`) — newer variant
+
+> 💡 If you can already install `.ipa` files on your device (manually or via Filza), you have everything you need.
 
 ## Features
 
-- **157k vintage app catalog** — SQLite database bundled in the IPA, opens in under 100 ms
-- **AI search** — natural-language queries via [Pollinations](https://pollinations.ai) (free, no API key, multilingual). Tell it « a game where you cut ropes to feed candy to a green creature » and it identifies *Cut the Rope*
-- **7 languages** — English, French, Spanish, German, Portuguese (Brazil), Japanese, Simplified Chinese. 138 keys × 7 langs = 966 translations, 100 % coverage
-- **Multi-select install** — tap « Select » in the catalog, check apps, install them all in one batch. Selection persists across thousands of scrolled rows
-- **Device-aware filter** — hides iPad-only apps on iPhone (they wouldn't run anyway)
-- **Cancellable downloads** — swipe to cancel one, or « Cancel all » button
-- **Skeuomorphic iOS 6 UI** — linen background, glossy buttons, brushed nav bars
-- **Live install progress** in the app detail's Install button (`Téléchargement 42 %` → `Installation…` → `Installé`)
-- **No backend** — talks directly to archive.org and pollinations.ai. No analytics, no account, no tracking
+- **157k vintage app catalog** bundled in the IPA — works offline once installed
+- **AI search** — describe an app in any language, the LLM finds it for you
+- **7 languages** — EN / FR / ES / DE / PT‑BR / JA / ZH‑Hans, auto-detected from your device
+- **Multi-select install** — queue up dozens of apps in one batch
+- **Cancellable downloads** with live progress
+- **Skeuomorphic iOS 6 UI** — fits naturally into your jailbroken device
+- **No backend, no account, no tracking** — talks directly to archive.org and pollinations.ai
 
 ## Install
 
-### Option A — Cydia / Sileo (recommended)
+### Quick path (5 minutes)
 
-1. Open Cydia (or Sileo).
-2. Sources → Edit → Add.
-3. Enter: `https://AdrienRL1.github.io/adrienrl/`
-4. Tap Add Source.
-5. Find **AppDrop** under the new source and install.
+1. **Verify the helper is installed.** Open **Cydia**, search for `IPA Installer Console`. If it doesn't say *Installed*, tap **Install**.
 
-You get auto-updates whenever a new version ships.
+2. **Download the IPA.** Grab the latest `AppDrop-v*.ipa` from the [Releases page](https://github.com/AdrienRL1/adrienrl/releases) on your computer.
 
-### Option B — Manual .ipa install
+3. **Transfer it to your device.** Easiest way: AirDrop the `.ipa` from your Mac to the iPad / iPhone. Alternative: SSH+`scp`, iCloud Drive, or any cloud storage app.
 
-1. Make sure **`IPA Installer Console`** (by autopear) is installed from Cydia.
-2. Download the latest `AppDrop-v*.ipa` from the [Releases page](https://github.com/AdrienRL1/adrienrl/releases).
-3. Transfer to your device (Filza, SSH+scp, AirDrop, etc.).
-4. Tap the IPA in Filza, or run on-device: `ipainstaller AppDrop-v*.ipa`.
-5. AppDrop appears on the home screen.
+4. **Install it.** Tap the file in your file manager (iFile / Filza) → choose **Installer** / *Install*. Or via SSH:
+   ```bash
+   ssh root@<device-ip>
+   ipainstaller /var/mobile/Documents/AppDrop-v1.0.ipa
+   ```
+
+5. **Done.** AppDrop appears on the home screen with rounded corners and the iOS 6 gloss reflection.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Icon not visible after install | SSH in and run `su mobile -c uicache && killall -9 SpringBoard`, or just reboot the device. |
+| `ipainstaller: command not found` | Install `IPA Installer Console` from Cydia first (step 1). |
+| `Echec install : Operation not permitted` | Your jailbreak's sandbox blocks `posix_spawn` — known on some iOS 5 jailbreaks. iOS 6+ is fine. |
+| App crashes on launch | Make sure your iOS is **6.0 or newer**. Older iOS isn't supported. |
+
+## Using AppDrop
+
+### The catalog
+
+<img src="screenshots/screenshot-11.png" width="500" alt="Catalog grid">
+
+Browse all 157,000 archived apps. Tap *Filters* to narrow by iOS version, device, or sort order. Tap *Select* to enter multi-pick mode for batch installs.
+
+### AI search
+
+<img src="screenshots/screenshot-12.png" width="380" alt="AI chat finding racing games">
+
+Tap the *AI Chat* tab and describe an app in plain language — any of the 7 supported languages works. The LLM identifies vintage titles (Real Racing 3, Asphalt 6, NFS, etc.) and shows them as tappable install cards.
+
+### App details
+
+<img src="screenshots/screenshot-13.png" width="400" alt="App detail showing Angry Birds with Install button">
+
+Tap any app to see its bundle ID, version, minimum iOS, platform, file size, and the actual archive.org URL. The big blue **Install** button shows live download progress (`Téléchargement 42 %` → `Installation…` → `Installé`).
+
+### Filters
+
+<img src="screenshots/screenshot-14.png" width="380" alt="Filters screen">
+
+Narrow the catalog by minimum / maximum iOS version, device class (iPhone, iPad, both), uniqueness (one row per bundle ID), and sort order. Tap a sort row again to flip ascending / descending.
 
 ## How it works
 
 ```
-Catalog metadata           : stuffed18.github.io/ipa-archive-updated
-   ↓ pre-built SQLite bundled in IPA
-AI search keywords          : text.pollinations.ai (anonymous, no key)
-   ↓
-IPA download               : http://archive.org/download/X/Y.ipa
-   ↓ archive.org redirects to CDN
-                            : http(s)://dn*.ca.archive.org
-   ↓ mbedTLS bundled in app (iOS 6 system TLS can't handshake modern certs)
-Local install              : /usr/bin/ipainstaller path/to/Y.ipa
+Catalog metadata          : stuffed18.github.io/ipa-archive-updated
+   ↓ pre-built SQLite bundled in the IPA
+AI search                 : text.pollinations.ai (anonymous, no key)
+   ↓ returns app titles + keywords
+IPA download              : http://archive.org/download/X/Y.ipa
+   ↓ archive.org → CDN redirect → mbedTLS-bundled HTTPS
+Local install             : /usr/bin/ipainstaller path/to/Y.ipa
    ↓
 App on home screen ✓
 ```
 
-The app downgrades archive.org requests from `https://` to `http://` to bypass Fastly's JA3-fingerprint blocking on old TLS clients. The CDN node then redirects to HTTPS, and our bundled mbedTLS handles the Let's Encrypt handshake.
+AppDrop downgrades archive.org requests from `https://` to `http://` to bypass Fastly's JA3-fingerprint blocking on old TLS clients. The CDN node then redirects to HTTPS, and the bundled mbedTLS handles the Let's Encrypt handshake on iOS 6 where the system TLS stack is too old.
 
 ## Build from source
 
-Requires [Theos](https://theos.dev) cross-compile toolchain on macOS.
+Requires the [Theos](https://theos.dev) cross-compile toolchain on macOS.
 
 ```bash
 git clone https://github.com/AdrienRL1/adrienrl.git
 cd adrienrl
 export THEOS=$HOME/theos
 
-# Build mbedTLS (one-time)
-cd deps && bash build-mbedtls.sh && cd ..
+# One-time: build mbedTLS for armv7 (or use the prebuilt libs in deps/build/)
+cd deps && bash build-mbedtls-ios.sh && cd ..
 
-# Build + deploy to a jailbroken iPad via SSH
+# Build the .ipa and deploy directly to a jailbroken device via SSH
 IPAD_IP=192.168.x.x bash build-install.sh
 ```
 
-The script needs `sshpass` (Homebrew: `brew install hudochenkov/sshpass/sshpass`) and SSH access (root/alpine by default) to a jailbroken iOS 6+ device.
+The build script needs `sshpass` (Homebrew: `brew install hudochenkov/sshpass/sshpass`) and SSH access (root / alpine by default) to a jailbroken iOS 6+ device.
 
 ## Architecture
 
 | Layer | Technology |
 |---|---|
 | UI | Objective-C, UIKit, custom `drawRect:` skeuomorphic widgets |
-| Networking | Bundled mbedTLS (TLS 1.2) on raw sockets — iOS 6 system TLS is dead for modern servers |
-| Catalog DB | SQLite (libsqlite3 system library) |
-| AI | Pollinations.ai (GPT-OSS 20B), prompt expert vintage iOS pre-iOS 7 |
+| Networking | Bundled mbedTLS (TLS 1.2) on raw sockets — iOS 6 system TLS can't handshake modern servers |
+| Catalog DB | SQLite (system `libsqlite3`) |
+| AI | Pollinations.ai (GPT-OSS 20B) with a vintage-iOS expert system prompt |
 | Install | `posix_spawn` → `/usr/bin/ipainstaller` |
-| i18n | NSBundle .lproj × 7 langs |
+| i18n | NSBundle `.lproj` × 7 langs |
 | Build | Theos (clang armv7) |
 
 ## Privacy
 
-AppDrop runs no analytics, has no account system, sends no telemetry. See [PRIVACY.md](PRIVACY.md) for the exhaustive list of third-party services contacted at runtime.
+AppDrop runs no analytics, has no account system, sends no telemetry. See [PRIVACY.md](PRIVACY.md) for the full list of third-party services contacted at runtime.
 
 ## License
 
-[MIT License](LICENSE). Use it, modify it, sell it, fork it.
+[MIT License](LICENSE) — use it, modify it, fork it.
 
 ## Credits
 
@@ -109,7 +145,7 @@ AppDrop runs no analytics, has no account system, sends no telemetry. See [PRIVA
 - **archive.org** — hosting the actual IPA files
 - **Pollinations.ai** — free anonymous LLM endpoint
 - **mbedTLS** — Apache-2.0 TLS library that made HTTPS work on iOS 6
-- **autopear** — `ipainstaller` (the Cydia helper this app delegates to)
+- **autopear** — `ipainstaller`, the helper AppDrop delegates to
 
 ## Disclaimer
 
