@@ -98,13 +98,21 @@ if [ "$1" = configure ]; then
         exit 1
     fi
     echo "Installing AppDrop bundle via $INSTALLER..."
-    if ! "$INSTALLER" "$IPA"; then
-        echo "ipainstaller failed. AppDrop bundle install aborted."
+    # Don't trust ipainstaller's exit code — it sometimes returns non-zero
+    # even after a successful install (probably from a tail step like
+    # uicache being skipped). Capture stdout and treat presence of
+    # "successfully" as the real signal of success. This matches the
+    # workaround used inside the app itself in InstallManager.m.
+    OUT=$("$INSTALLER" "$IPA" 2>&1)
+    RC=$?
+    echo "$OUT"
+    if [ $RC -eq 0 ] || echo "$OUT" | grep -qi 'successfully'; then
+        echo "AppDrop bundle installed."
+        rm -f "$IPA"
+    else
+        echo "ipainstaller exited $RC and didn't say 'successfully' — install aborted."
         exit 1
     fi
-    # Cleanup: the helper .ipa is no longer needed. We leave the empty
-    # /usr/share/appdrop/ dir for dpkg's file-tracking peace of mind.
-    rm -f "$IPA"
 fi
 exit 0
 EOF

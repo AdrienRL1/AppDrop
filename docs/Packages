@@ -10,8 +10,8 @@ Priority: optional
 Homepage: https://github.com/AdrienRL1/adrienrl
 Depends: com.autopear.installipa | ai.akemi.appinst | ipainstaller | appinst
 Filename: debs/ca.adrien.appdrop_1.0_iphoneos-arm.deb
-Size: 17016474
-MD5sum: 995e35dfb8904fcc1ff0ca39c1054228
-SHA1: 324c6120c8a367d945d0cbadf29b970b73f4d8fa
-SHA256: 1029df5db1692b266e471f2083de9db06dcff80a837631c71f1dcba812a06275
+Size: 17016738
+MD5sum: c3812a56a26812ebe9db14ba93ba3cb3
+SHA1: 51cc927832d3353766e23a3bdb4279b2f0464837
+SHA256: 2c51c798248c96b2b63f7a75b6640d71d07784c4d5dd45491dd7a2d4d3a4f8b5
 Icon: https://adrienrl1.github.io/adrienrl/CydiaIcon.png
