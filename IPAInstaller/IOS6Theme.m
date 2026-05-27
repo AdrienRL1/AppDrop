@@ -18,6 +18,18 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
     return s;
 }
 
+// Cached at first call — major version doesn't change during process lifetime.
++ (BOOL)useFlatStyle {
+    static BOOL flat = NO;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        NSString *v = [[UIDevice currentDevice] systemVersion];
+        NSInteger major = [[[v componentsSeparatedByString:@"."] firstObject] integerValue];
+        flat = (major >= 7);
+    });
+    return flat;
+}
+
 // ---- Backgrounds ----
 
 + (UIImage *)navBarBackground {

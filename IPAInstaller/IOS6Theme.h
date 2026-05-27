@@ -8,6 +8,15 @@
 
 + (instancetype)shared;
 
+// YES on iOS 7.0+, NO on iOS 6.x. iOS 7 dropped Apple's skeuomorphic chrome
+// (gradient nav bars, glossy buttons, shadowed text) in favour of a flat,
+// borderless aesthetic — applying our iOS-6 PNG backgrounds on top of that
+// system makes the app look dated and out of place on later devices. So
+// callers that paint skeuomorphic styling should branch on this value and
+// fall back to system defaults / solid colors on iOS 7+. Cheap to call
+// (cached on first use; just a Major-Version comparison on Info.plist).
++ (BOOL)useFlatStyle;
+
 // ---- Legacy compat (existing code uses these names) ----
 + (UIImage *)linenBackground;
 + (UIColor *)linenColor;

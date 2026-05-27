@@ -331,7 +331,14 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     NSFileManager *fm = [NSFileManager defaultManager];
     [fm createDirectoryAtPath:destDir withIntermediateDirectories:YES
                     attributes:nil error:nil];
-    NSString *filename = [[NSURL URLWithString:url] lastPathComponent] ?: @"app.ipa";
+    // v1.3 fix: [NSURL URLWithString:url] returns nil for URLs with unencoded
+    // spaces (very common on archive.org: "iOS 5/App With Spaces.ipa"), which
+    // collapsed every such file to "app.ipa" and overwrote previous downloads.
+    // Use NSString's lastPathComponent (a path-style split on '/', does not
+    // validate the URL) then percent-decode whatever escapes are in there.
+    NSString *lastComp = [url lastPathComponent];
+    NSString *decoded = [lastComp stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString *filename = decoded.length ? decoded : (lastComp.length ? lastComp : @"app.ipa");
     NSString *destPath = [destDir stringByAppendingPathComponent:filename];
     // If a previous copy exists with same name, remove it before moving the new one.
     [fm removeItemAtPath:destPath error:nil];
