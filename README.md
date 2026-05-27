@@ -73,11 +73,11 @@ Browse all 157,000 archived apps. Tap *Filters* to narrow by iOS version, device
 
 Tap the *AI Chat* tab and describe an app in plain language — any of the 7 supported languages works. The LLM identifies vintage titles (Real Racing 3, Asphalt 6, NFS, etc.) and shows them as tappable install cards.
 
-### App details
+### Search
 
-<img src="screenshots/screenshot-13.png" width="400" alt="App detail showing Angry Birds with Install button">
+<img src="screenshots/screenshot-13.png" width="400" alt="Search tab finding Real Racing 1/2/3">
 
-Tap any app to see its bundle ID, version, minimum iOS, platform, file size, and the actual archive.org URL. The big blue **Install** button shows live download progress (`Téléchargement 42 %` → `Installation…` → `Installé`).
+The **Search** tab lets you find apps by name in real time across all 157k entries — debounce is 150 ms so results stream in as you type. Each row shows the version, minimum iOS, file size and the actual `.ipa` filename so you can pick the right mirror. Tap a row to open the detail screen and install.
 
 ### Filters
 
