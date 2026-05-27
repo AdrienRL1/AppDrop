@@ -135,7 +135,7 @@ Size: $SIZE
 MD5sum: $MD5
 SHA1: $SHA1
 SHA256: $SHA256
-Icon: file://./CydiaIcon.png
+Icon: https://adrienrl1.github.io/adrienrl/CydiaIcon.png
 EOF
 
 gzip -9c docs/Packages > docs/Packages.gz
