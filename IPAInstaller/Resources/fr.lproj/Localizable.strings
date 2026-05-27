@@ -1,0 +1,175 @@
+/* AppDrop — Français */
+
+/* ===== Tab bar ===== */
+"tab.catalog" = "Catalogue";
+"tab.ai" = "IA";
+"tab.install" = "Installer";
+"tab.settings" = "Réglages";
+
+/* ===== Catalog screen ===== */
+"catalog.title" = "Catalogue";
+"catalog.filters" = "Filtres";
+"catalog.search_placeholder" = "Rechercher (titre ou bundle ID)";
+"catalog.loading" = "Chargement du catalogue...";
+"catalog.loading_more" = "Chargement...";
+"catalog.network_error" = "Erreur réseau : %@";
+"catalog.server_invalid" = "Réponse serveur invalide";
+"catalog.apps_count" = "%lu / %ld apps%@";
+"catalog.end" = " — fin";
+"catalog.select" = "Sélectionner";
+"catalog.install_n" = "Installer (%lu)";
+"catalog.install_started_n" = "%lu installation(s) lancée(s)";
+
+/* ===== AI Chat screen ===== */
+"chat.title" = "Chat IA";
+"chat.placeholder" = "Posez votre question...";
+"chat.send" = "Envoyer";
+
+/* ===== App detail screen ===== */
+"app.install" = "Installer";
+"app.starting" = "Lancement...";
+"app.btn.downloading" = "Téléchargement %ld %%";
+"app.btn.installing" = "Installation…";
+"app.btn.queued" = "En attente";
+"app.btn.installed" = "Installé";
+"app.btn.retry" = "Réessayer";
+"app.versions" = "Versions";
+"app.no_url" = "Pas d'URL";
+"app.no_url_msg" = "Cette app n'a pas d'URL valide.";
+
+/* ===== Install (root) screen ===== */
+"install.title" = "Installer une IPA";
+"install.clear" = "Vider";
+"install.url_label" = "URL de l'IPA (https:// ou itms-services://)";
+"install.url_placeholder" = "https://archive.org/.../app.ipa";
+"install.button" = "Installer";
+"install.installations" = "Installations (%lu)";
+
+/* ===== Settings screen ===== */
+"settings.title" = "Réglages";
+"settings.section_diagnostics" = "Diagnostics";
+"settings.section_diagnostics_footer" = "Teste si l'iPad peut joindre archive.org en HTTPS direct (nécessaire pour installer une IPA) et si le binaire ipainstaller répond depuis l'app.";
+"settings.section_cache" = "Cache";
+"settings.section_about" = "À propos";
+"settings.test_https" = "Tester HTTPS direct vers archive.org";
+"settings.test_ipainstaller" = "Tester invocation ipainstaller";
+"settings.clear_icons" = "Vider le cache d'icônes";
+"settings.cache_cleared" = "Cache vidé";
+"settings.cache_cleared_msg" = "Toutes les icônes du catalogue ont été libérées de la mémoire.";
+"settings.about_app" = "App";
+"settings.about_version" = "Version";
+"settings.about_bundle" = "Bundle ID";
+"settings.about_min_ios" = "iOS min de l'app";
+"settings.about_device_ios" = "iOS de l'appareil";
+"settings.about_device_model" = "Modèle de l'appareil";
+"settings.language" = "Langue";
+"settings.language_auto" = "Automatique (système)";
+
+/* ===== Common buttons ===== */
+"common.ok" = "OK";
+"common.cancel" = "Annuler";
+
+/* ===== Catalog filter ===== */
+"filter.title" = "Filtres";
+"filter.all_versions" = "Toutes versions iOS";
+"filter.unique" = "unique";
+"filter.sort_label" = "tri : %@";
+
+"chat.found_apps" = "J'ai trouvé %lu apps qui correspondent.";
+
+"chat.llm_error" = "Service IA indisponible. Vérifiez votre connexion et réessayez.";
+
+/* ===== Install screen actions (v1.8.7) ===== */
+"install.cancel_all" = "Tout annuler";
+"install.empty" = "Aucune installation lancée";
+"install.cancelled_title" = "Annulé";
+"install.cancelled_msg" = "%ld téléchargement(s) annulé(s).";
+"install.swipe_cancel" = "Annuler";
+"install.swipe_delete" = "Supprimer";
+
+/* ===== Install errors / common URL validation (v1.8.7) ===== */
+"common.empty_url" = "URL vide";
+"common.empty_url_msg" = "Collez ou tapez une URL d'IPA.";
+"common.invalid_url" = "URL invalide";
+"common.invalid_url_msg" = "L'URL doit être https://...ipa ou itms-services://...";
+"common.error" = "Erreur";
+"common.cancelled" = "Annulé";
+"common.too_many_redirects" = "Trop de redirects";
+
+/* ===== Install job states (v1.8.7) ===== */
+"install.state.queued" = "En attente...";
+"install.state.preparing" = "Mode autonome - prépare";
+"install.state.connecting" = "Connexion HTTPS...";
+"install.state.downloading_full" = "Téléchargement : %.1f Mo / %.1f Mo (%ld%%)";
+"install.state.downloading_partial" = "Téléchargement : %.1f Mo";
+"install.state.installing" = "Installation locale...";
+"install.state.installed_prefix" = "Installé : %@";
+"install.state.cancelling" = "Annulation en cours...";
+"install.state.cancelled_user" = "Annulé par l'utilisateur";
+
+/* ===== Install errors (v1.8.7) ===== */
+"install.error.failed_prefix" = "Échec : %@";
+"install.error.404" = "Fichier introuvable sur le serveur (404). L'IPA a été supprimée ou déplacée.";
+"install.error.403" = "Accès refusé par le serveur (403).";
+"install.error.5xx_archive" = "Serveur temporairement indisponible (HTTP %ld). Le CDN d'archive.org peut limiter votre IP — attendez 1-2 minutes et réessayez.";
+"install.error.5xx_generic" = "Erreur serveur HTTP %ld";
+"install.error.http_generic" = "HTTP %ld";
+"install.error.network" = "Échec réseau";
+"install.error.no_ipainstaller" = "ipainstaller introuvable. Installe le paquet « IPA Installer Console » depuis Cydia/Sileo (recherche : appinst ou ipainstaller).";
+"install.error.spawn_failed" = "posix_spawn(%s) a échoué : %s";
+"install.error.install_failed" = "Échec install (exit %d) : %@";
+
+/* ===== App detail extras (v1.8.7) ===== */
+"app.fallback_title" = "App";
+"app.subtitle_with_size" = "v%@ — %@";
+"app.size_unknown" = "taille ?";
+"app.info_bundle_id" = "Bundle ID";
+"app.info_version" = "Version";
+"app.info_min_ios" = "Min iOS";
+"app.info_platform" = "Plateforme";
+"app.info_size" = "Taille";
+"app.info_file" = "Fichier";
+"app.info_mirror" = "Mirror";
+"app.info_url" = "URL complète";
+
+/* ===== Filter screen extras (v1.8.7) ===== */
+"filter.section.version" = "Version iOS de l'app";
+"filter.section.device" = "Compatibilité appareil";
+"filter.section.options" = "Options";
+"filter.section.sort" = "Trier par";
+"filter.footer.version" = "Filtre les apps selon la version iOS qu'elles requièrent. Mettre la version iOS de votre appareil en max pour ne voir que les apps compatibles.";
+"filter.footer.device" = "iPhone : seulement les apps qui supportent l'iPhone (y compris universelles). iPad : seulement les apps qui supportent l'iPad. Toutes : sans filtre.";
+"filter.footer.options" = "Unique : une seule entrée par bundle ID, en gardant la version la plus récente.";
+"filter.device.all" = "Toutes les apps";
+"filter.device.iphone" = "iPhone / iPod touch";
+"filter.device.ipad" = "iPad";
+"filter.sort.recent_long" = "Plus récents";
+"filter.sort.name_long" = "Nom A-Z";
+"filter.sort.size_long" = "Taille";
+"filter.sort.minos_long" = "Min iOS";
+"filter.none" = "aucun";
+"filter.choose_none" = "Aucun";
+"filter.reset" = "Réinitialiser aux défauts";
+"filter.unique_switch" = "Unique (dédupe bundle ID)";
+"filter.min_ios_row" = "Min iOS";
+"filter.max_ios_row" = "Max iOS";
+
+/* ===== Versions screen (v1.8.7) ===== */
+"versions.invalid_response" = "Réponse invalide";
+"versions.footer" = "Chaque ligne est un mirror différent. Choisissez selon la version d'iOS de votre app et la source.";
+
+/* ===== CatalogFilter short labels (v1.8.7) ===== */
+"catalog.short.recent" = "récent";
+"catalog.short.name" = "nom";
+"catalog.short.size" = "taille";
+"catalog.short.minos" = "iOS";
+
+/* ===== Onboarding + sort direction (v2.0.8) ===== */
+"onboarding.ipainstaller_title" = "Pré-requis";
+"onboarding.ipainstaller_msg" = "Pour installer des IPAs, tu dois avoir le paquet « IPA Installer Console » installé depuis Cydia ou Sileo (cherche : appinst ou ipainstaller). Sans lui, aucune app ne peut être installée localement. Tu l'as installé ?";
+"onboarding.ipainstaller_continue" = "Oui, continuer";
+"onboarding.ipainstaller_cancel" = "Pas encore";
+"onboarding.catalog_quality_title" = "À propos du catalogue";
+"onboarding.catalog_quality_msg" = "Le catalogue upstream contient une petite fraction d'apps avec un titre ou une icône incorrects — ce n'est pas de notre contrôle (problème de données chez stuffed18.github.io, pas dans l'app). Le nom du fichier .ipa affiché sous chaque app est ce qui sera réellement installé. Contre-vérifie avant d'installer si c'est bien l'app que tu veux.";
+"common.understood" = "Compris";
+"filter.footer.sort" = "Tape à nouveau sur l'option sélectionnée pour basculer entre croissant et décroissant.";

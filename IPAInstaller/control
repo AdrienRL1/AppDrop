@@ -1,0 +1,9 @@
+Package: ca.adrien.ipainstaller
+Name: IPA Install
+Version: 0.1.0
+Architecture: iphoneos-arm
+Description: Direct IPA installer with parallel downloads (iOS 5+)
+Maintainer: Adrien
+Author: Adrien
+Section: Utilities
+Depends: firmware (>= 5.0)

@@ -1,0 +1,167 @@
+/* AppDrop — 简体中文 */
+
+"tab.catalog" = "目录";
+"tab.ai" = "AI";
+"tab.install" = "安装";
+"tab.settings" = "设置";
+
+"catalog.title" = "目录";
+"catalog.filters" = "筛选";
+"catalog.search_placeholder" = "搜索 (标题或 bundle ID)";
+"catalog.loading" = "正在加载目录...";
+"catalog.loading_more" = "加载中...";
+"catalog.network_error" = "网络错误: %@";
+"catalog.server_invalid" = "服务器响应无效";
+"catalog.apps_count" = "%lu / %ld 个应用%@";
+"catalog.end" = " — 结束";
+"catalog.select" = "选择";
+"catalog.install_n" = "安装 (%lu)";
+"catalog.install_started_n" = "%lu个安装已开始";
+
+"chat.title" = "AI 聊天";
+"chat.placeholder" = "请输入您的问题...";
+"chat.send" = "发送";
+
+"app.install" = "安装";
+"app.starting" = "正在启动...";
+"app.btn.downloading" = "下载中 %ld %%";
+"app.btn.installing" = "正在安装…";
+"app.btn.queued" = "队列中";
+"app.btn.installed" = "已安装";
+"app.btn.retry" = "重试";
+"app.versions" = "版本";
+"app.no_url" = "无 URL";
+"app.no_url_msg" = "此应用没有有效的 URL。";
+
+"install.title" = "安装 IPA";
+"install.clear" = "清空";
+"install.url_label" = "IPA 的 URL (https:// 或 itms-services://)";
+"install.url_placeholder" = "https://archive.org/.../app.ipa";
+"install.button" = "安装";
+"install.installations" = "安装项 (%lu)";
+
+"settings.title" = "设置";
+"settings.section_diagnostics" = "诊断";
+"settings.section_diagnostics_footer" = "测试 iPad 能否直接通过 HTTPS 访问 archive.org (安装 IPA 所需) 以及 ipainstaller 二进制是否能从应用响应。";
+"settings.section_cache" = "缓存";
+"settings.section_about" = "关于";
+"settings.test_https" = "测试到 archive.org 的直接 HTTPS";
+"settings.test_ipainstaller" = "测试 ipainstaller 调用";
+"settings.clear_icons" = "清除图标缓存";
+"settings.cache_cleared" = "缓存已清除";
+"settings.cache_cleared_msg" = "目录的所有图标已从内存释放。";
+"settings.about_app" = "应用";
+"settings.about_version" = "版本";
+"settings.about_bundle" = "Bundle ID";
+"settings.about_min_ios" = "应用最低 iOS";
+"settings.about_device_ios" = "设备 iOS";
+"settings.about_device_model" = "设备型号";
+"settings.language" = "语言";
+"settings.language_auto" = "自动 (系统)";
+
+"common.ok" = "好";
+"common.cancel" = "取消";
+
+"filter.title" = "筛选";
+"filter.all_versions" = "所有 iOS 版本";
+"filter.unique" = "唯一";
+"filter.sort_label" = "排序: %@";
+
+"chat.found_apps" = "找到 %lu 个匹配的应用。";
+
+"chat.llm_error" = "AI 服务不可用。请检查网络后重试。";
+
+/* ===== Install screen actions (v1.8.7) ===== */
+"install.cancel_all" = "全部取消";
+"install.empty" = "尚未开始任何安装";
+"install.cancelled_title" = "已取消";
+"install.cancelled_msg" = "已取消 %ld 个下载。";
+"install.swipe_cancel" = "取消";
+"install.swipe_delete" = "删除";
+
+/* ===== Install errors / common URL validation (v1.8.7) ===== */
+"common.empty_url" = "URL 为空";
+"common.empty_url_msg" = "请粘贴或输入 IPA 的 URL。";
+"common.invalid_url" = "无效的 URL";
+"common.invalid_url_msg" = "URL 必须为 https://...ipa 或 itms-services://...";
+"common.error" = "错误";
+"common.cancelled" = "已取消";
+"common.too_many_redirects" = "重定向次数过多";
+
+/* ===== Install job states (v1.8.7) ===== */
+"install.state.queued" = "等待中...";
+"install.state.preparing" = "自主模式 — 准备中";
+"install.state.connecting" = "HTTPS 连接中...";
+"install.state.downloading_full" = "正在下载: %.1f MB / %.1f MB (%ld%%)";
+"install.state.downloading_partial" = "正在下载: %.1f MB";
+"install.state.installing" = "正在本地安装...";
+"install.state.installed_prefix" = "已安装: %@";
+"install.state.cancelling" = "正在取消...";
+"install.state.cancelled_user" = "用户已取消";
+
+/* ===== Install errors (v1.8.7) ===== */
+"install.error.failed_prefix" = "失败: %@";
+"install.error.404" = "服务器上找不到文件 (404)。IPA 已被删除或移动。";
+"install.error.403" = "服务器拒绝访问 (403)。";
+"install.error.5xx_archive" = "服务器暂时不可用 (HTTP %ld)。archive.org 的 CDN 可能在限制您的 IP — 请等待 1-2 分钟后重试。";
+"install.error.5xx_generic" = "服务器错误 HTTP %ld";
+"install.error.http_generic" = "HTTP %ld";
+"install.error.network" = "网络故障";
+"install.error.no_ipainstaller" = "找不到 ipainstaller。请从 Cydia/Sileo 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。";
+"install.error.spawn_failed" = "posix_spawn(%s) 失败: %s";
+"install.error.install_failed" = "安装失败 (exit %d): %@";
+
+/* ===== App detail extras (v1.8.7) ===== */
+"app.fallback_title" = "应用";
+"app.subtitle_with_size" = "v%@ — %@";
+"app.size_unknown" = "大小 ?";
+"app.info_bundle_id" = "Bundle ID";
+"app.info_version" = "版本";
+"app.info_min_ios" = "最低 iOS";
+"app.info_platform" = "平台";
+"app.info_size" = "大小";
+"app.info_file" = "文件";
+"app.info_mirror" = "镜像";
+"app.info_url" = "完整 URL";
+
+/* ===== Filter screen extras (v1.8.7) ===== */
+"filter.section.version" = "应用的 iOS 版本";
+"filter.section.device" = "设备兼容性";
+"filter.section.options" = "选项";
+"filter.section.sort" = "排序方式";
+"filter.footer.version" = "按应用所需的 iOS 版本筛选。将最高 iOS 设为您设备的 iOS 版本可只看兼容的应用。";
+"filter.footer.device" = "iPhone: 仅支持 iPhone 的应用 (含通用应用)。iPad: 仅支持 iPad 的应用。所有: 不筛选。";
+"filter.footer.options" = "唯一: 每个 bundle ID 只保留一条,保留最新版本。";
+"filter.device.all" = "所有应用";
+"filter.device.iphone" = "iPhone / iPod touch";
+"filter.device.ipad" = "iPad";
+"filter.sort.recent_long" = "最新";
+"filter.sort.name_long" = "名称 A-Z";
+"filter.sort.size_long" = "大小";
+"filter.sort.minos_long" = "最低 iOS";
+"filter.none" = "无";
+"filter.choose_none" = "无";
+"filter.reset" = "重置为默认";
+"filter.unique_switch" = "唯一 (按 bundle ID 去重)";
+"filter.min_ios_row" = "最低 iOS";
+"filter.max_ios_row" = "最高 iOS";
+
+/* ===== Versions screen (v1.8.7) ===== */
+"versions.invalid_response" = "无效的响应";
+"versions.footer" = "每一行是一个不同的镜像。请根据您应用的 iOS 版本和来源选择。";
+
+/* ===== CatalogFilter short labels (v1.8.7) ===== */
+"catalog.short.recent" = "最新";
+"catalog.short.name" = "名称";
+"catalog.short.size" = "大小";
+"catalog.short.minos" = "iOS";
+
+/* ===== Onboarding + sort direction (v2.0.8) ===== */
+"onboarding.ipainstaller_title" = "前置要求";
+"onboarding.ipainstaller_msg" = "要安装 IPA，你需要从 Cydia 或 Sileo 安装「IPA Installer Console」软件包 (搜索: appinst 或 ipainstaller)。没有它，应用无法在本地安装。你已经安装了吗？";
+"onboarding.ipainstaller_continue" = "是，继续";
+"onboarding.ipainstaller_cancel" = "还没有";
+"onboarding.catalog_quality_title" = "关于目录";
+"onboarding.catalog_quality_msg" = "上游目录中有少量应用的标题或图标不正确 — 这不在我们的控制范围内 (是 stuffed18.github.io 的数据问题，并非应用的问题)。每个应用下方显示的 .ipa 文件名才是实际将要安装的内容。安装前请再次核对是否为你想要的应用。";
+"common.understood" = "知道了";
+"filter.footer.sort" = "再次点按已选中的选项，可在升序 / 降序之间切换。";

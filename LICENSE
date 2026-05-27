@@ -1,0 +1,56 @@
+MIT License
+
+Copyright (c) 2026 Adrien Ruest-Lorquet
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Third-party components
+
+This project bundles or relies on the following third-party software, each
+under its own license. None of these licenses are GPL or copyleft.
+
+### mbedTLS — Apache 2.0
+TLS / cryptography library (`deps/mbedtls/`). Used for bundled HTTPS on iOS 5/6
+where the system TLS stack can no longer handshake with modern servers.
+Source: https://github.com/Mbed-TLS/mbedtls
+
+### SQLite — Public domain
+On-device catalog database (`Resources/catalog.db`). Linked dynamically via the
+iOS-bundled `libsqlite3.dylib`.
+Source: https://sqlite.org/
+
+### Theos — GPLv3 (build system only, not bundled in the IPA)
+Cross-compilation toolchain used during development.
+Source: https://github.com/theos/theos
+
+## Data sources
+
+The app queries the following public services at runtime. These are not part
+of the source code license but are documented here for transparency:
+
+- **stuffed18/ipa-archive-updated** (GitHub Pages, public catalog metadata) —
+  https://stuffed18.github.io/ipa-archive-updated
+- **archive.org** (public IPA file hosting) — https://archive.org
+- **pollinations.ai** (free anonymous LLM endpoint) — https://pollinations.ai
+
+The catalog data and IPA files are hosted by third parties under their own
+terms of service. This app is a client that fetches and installs publicly
+listed files; it does not redistribute any IPA on its own.

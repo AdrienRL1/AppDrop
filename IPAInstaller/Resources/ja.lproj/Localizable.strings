@@ -1,0 +1,167 @@
+/* AppDrop — 日本語 */
+
+"tab.catalog" = "カタログ";
+"tab.ai" = "AI";
+"tab.install" = "インストール";
+"tab.settings" = "設定";
+
+"catalog.title" = "カタログ";
+"catalog.filters" = "フィルタ";
+"catalog.search_placeholder" = "検索 (タイトル または バンドル ID)";
+"catalog.loading" = "カタログを読み込み中...";
+"catalog.loading_more" = "読み込み中...";
+"catalog.network_error" = "ネットワークエラー: %@";
+"catalog.server_invalid" = "サーバ応答が無効です";
+"catalog.apps_count" = "%lu / %ld 個のアプリ%@";
+"catalog.end" = " — 終了";
+"catalog.select" = "選択";
+"catalog.install_n" = "インストール (%lu)";
+"catalog.install_started_n" = "%lu件のインストールを開始";
+
+"chat.title" = "AI チャット";
+"chat.placeholder" = "質問を入力...";
+"chat.send" = "送信";
+
+"app.install" = "インストール";
+"app.starting" = "起動中...";
+"app.btn.downloading" = "ダウンロード中 %ld %%";
+"app.btn.installing" = "インストール中…";
+"app.btn.queued" = "待機中";
+"app.btn.installed" = "インストール済み";
+"app.btn.retry" = "再試行";
+"app.versions" = "バージョン";
+"app.no_url" = "URL なし";
+"app.no_url_msg" = "このアプリには有効な URL がありません。";
+
+"install.title" = "IPA をインストール";
+"install.clear" = "クリア";
+"install.url_label" = "IPA の URL (https:// または itms-services://)";
+"install.url_placeholder" = "https://archive.org/.../app.ipa";
+"install.button" = "インストール";
+"install.installations" = "インストール (%lu)";
+
+"settings.title" = "設定";
+"settings.section_diagnostics" = "診断";
+"settings.section_diagnostics_footer" = "iPad が archive.org に直接 HTTPS でアクセスできるか (IPA インストールに必要)、および ipainstaller バイナリがアプリから応答するかをテストします。";
+"settings.section_cache" = "キャッシュ";
+"settings.section_about" = "情報";
+"settings.test_https" = "archive.org への直接 HTTPS をテスト";
+"settings.test_ipainstaller" = "ipainstaller の呼び出しをテスト";
+"settings.clear_icons" = "アイコンキャッシュをクリア";
+"settings.cache_cleared" = "キャッシュをクリアしました";
+"settings.cache_cleared_msg" = "カタログのアイコンがメモリから解放されました。";
+"settings.about_app" = "アプリ";
+"settings.about_version" = "バージョン";
+"settings.about_bundle" = "バンドル ID";
+"settings.about_min_ios" = "アプリの最小 iOS";
+"settings.about_device_ios" = "デバイスの iOS";
+"settings.about_device_model" = "デバイスのモデル";
+"settings.language" = "言語";
+"settings.language_auto" = "自動 (システム)";
+
+"common.ok" = "OK";
+"common.cancel" = "キャンセル";
+
+"filter.title" = "フィルタ";
+"filter.all_versions" = "すべての iOS バージョン";
+"filter.unique" = "一意";
+"filter.sort_label" = "並び順: %@";
+
+"chat.found_apps" = "%lu 個のアプリが見つかりました。";
+
+"chat.llm_error" = "AI サービスが利用できません。ネットワークを確認して再試行してください。";
+
+/* ===== Install screen actions (v1.8.7) ===== */
+"install.cancel_all" = "すべてキャンセル";
+"install.empty" = "インストールが開始されていません";
+"install.cancelled_title" = "キャンセル済み";
+"install.cancelled_msg" = "%ld 件のダウンロードをキャンセルしました。";
+"install.swipe_cancel" = "キャンセル";
+"install.swipe_delete" = "削除";
+
+/* ===== Install errors / common URL validation (v1.8.7) ===== */
+"common.empty_url" = "URL が空です";
+"common.empty_url_msg" = "IPA の URL を貼り付けるか入力してください。";
+"common.invalid_url" = "無効な URL";
+"common.invalid_url_msg" = "URL は https://...ipa または itms-services://... の形式である必要があります";
+"common.error" = "エラー";
+"common.cancelled" = "キャンセル済み";
+"common.too_many_redirects" = "リダイレクトが多すぎます";
+
+/* ===== Install job states (v1.8.7) ===== */
+"install.state.queued" = "待機中...";
+"install.state.preparing" = "自律モード — 準備中";
+"install.state.connecting" = "HTTPS 接続中...";
+"install.state.downloading_full" = "ダウンロード中: %.1f MB / %.1f MB (%ld%%)";
+"install.state.downloading_partial" = "ダウンロード中: %.1f MB";
+"install.state.installing" = "ローカルインストール中...";
+"install.state.installed_prefix" = "インストール完了: %@";
+"install.state.cancelling" = "キャンセル中...";
+"install.state.cancelled_user" = "ユーザーによりキャンセル";
+
+/* ===== Install errors (v1.8.7) ===== */
+"install.error.failed_prefix" = "失敗: %@";
+"install.error.404" = "サーバ上にファイルが見つかりません (404)。IPA は削除されたか移動されました。";
+"install.error.403" = "サーバによってアクセスが拒否されました (403)。";
+"install.error.5xx_archive" = "サーバが一時的に利用できません (HTTP %ld)。archive.org の CDN が IP を制限している可能性があります — 1-2 分待ってから再試行してください。";
+"install.error.5xx_generic" = "サーバエラー HTTP %ld";
+"install.error.http_generic" = "HTTP %ld";
+"install.error.network" = "ネットワーク障害";
+"install.error.no_ipainstaller" = "ipainstaller が見つかりません。Cydia/Sileo から「IPA Installer Console」パッケージをインストールしてください (検索: appinst または ipainstaller)。";
+"install.error.spawn_failed" = "posix_spawn(%s) が失敗: %s";
+"install.error.install_failed" = "インストール失敗 (exit %d): %@";
+
+/* ===== App detail extras (v1.8.7) ===== */
+"app.fallback_title" = "アプリ";
+"app.subtitle_with_size" = "v%@ — %@";
+"app.size_unknown" = "サイズ ?";
+"app.info_bundle_id" = "バンドル ID";
+"app.info_version" = "バージョン";
+"app.info_min_ios" = "最小 iOS";
+"app.info_platform" = "プラットフォーム";
+"app.info_size" = "サイズ";
+"app.info_file" = "ファイル";
+"app.info_mirror" = "ミラー";
+"app.info_url" = "完全な URL";
+
+/* ===== Filter screen extras (v1.8.7) ===== */
+"filter.section.version" = "アプリの iOS バージョン";
+"filter.section.device" = "デバイス互換性";
+"filter.section.options" = "オプション";
+"filter.section.sort" = "並べ替え";
+"filter.footer.version" = "必要な iOS バージョンでアプリをフィルタします。最大 iOS をデバイスの iOS バージョンに設定すると、互換性のあるアプリだけが表示されます。";
+"filter.footer.device" = "iPhone: iPhone をサポートするアプリのみ (ユニバーサル含む)。iPad: iPad をサポートするアプリのみ。すべて: フィルタなし。";
+"filter.footer.options" = "ユニーク: バンドル ID ごとに 1 エントリ、最新バージョンのみ保持。";
+"filter.device.all" = "すべてのアプリ";
+"filter.device.iphone" = "iPhone / iPod touch";
+"filter.device.ipad" = "iPad";
+"filter.sort.recent_long" = "最新";
+"filter.sort.name_long" = "名前 A-Z";
+"filter.sort.size_long" = "サイズ";
+"filter.sort.minos_long" = "最小 iOS";
+"filter.none" = "なし";
+"filter.choose_none" = "なし";
+"filter.reset" = "デフォルトにリセット";
+"filter.unique_switch" = "ユニーク (バンドル ID 重複排除)";
+"filter.min_ios_row" = "最小 iOS";
+"filter.max_ios_row" = "最大 iOS";
+
+/* ===== Versions screen (v1.8.7) ===== */
+"versions.invalid_response" = "無効な応答";
+"versions.footer" = "各行は別のミラーです。アプリの iOS バージョンとソースに応じて選択してください。";
+
+/* ===== CatalogFilter short labels (v1.8.7) ===== */
+"catalog.short.recent" = "最新";
+"catalog.short.name" = "名前";
+"catalog.short.size" = "サイズ";
+"catalog.short.minos" = "iOS";
+
+/* ===== Onboarding + sort direction (v2.0.8) ===== */
+"onboarding.ipainstaller_title" = "前提条件";
+"onboarding.ipainstaller_msg" = "IPA をインストールするには、Cydia または Sileo から「IPA Installer Console」パッケージが必要です (検索: appinst または ipainstaller)。これがないとアプリをローカルにインストールできません。インストール済みですか？";
+"onboarding.ipainstaller_continue" = "はい、続ける";
+"onboarding.ipainstaller_cancel" = "まだ";
+"onboarding.catalog_quality_title" = "カタログについて";
+"onboarding.catalog_quality_msg" = "上流カタログにはタイトルやアイコンが正しくないアプリがわずかに含まれています。これは私たちの管理外です (stuffed18.github.io のデータの問題で、アプリの問題ではありません)。各アプリの下に表示される .ipa ファイル名が、実際にインストールされるものです。インストール前に、目的のアプリかどうか必ず確認してください。";
+"common.understood" = "了解";
+"filter.footer.sort" = "選択中のオプションを再度タップすると、昇順 / 降順を切り替えられます。";
