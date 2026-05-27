@@ -1,0 +1,7 @@
+# GitHub picks this file up automatically and renders a "❤️ Sponsor" button
+# at the top of the repo page. Clicking it goes straight to PayPal.Me.
+#
+# Donors can pick "Send to a friend" on PayPal to make it fee-free (CAD→CAD
+# domestic). The "Goods or services" option charges ~3% + 30¢ to the
+# recipient, which is fine but worth noting in the donate flow.
+paypal: adrienrl1
