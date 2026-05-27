@@ -42,7 +42,17 @@
 
 2. **Download the IPA.** Grab the latest `AppDrop-v*.ipa` from the [Releases page](https://github.com/AdrienRL1/AppDrop/releases) on your computer.
 
-3. **Transfer it to your device.** Easiest way: AirDrop the `.ipa` from your Mac to the iPad / iPhone. Alternative: SSH+`scp`, iCloud Drive, or any cloud storage app.
+3. **Transfer the IPA to your device.** Pick whichever path you have set up:
+
+   - **SSH + `scp`** — most reliable, requires the `OpenSSH` package from Cydia. Default password on a freshly-jailbroken iOS 6+ device is `alpine` (change it!):
+     ```bash
+     scp AppDrop-vX.Y.ipa root@<device-ip>:/var/mobile/Documents/
+     ```
+   - **USB file manager from your computer** — [iMazing](https://imazing.com/), [iFunbox](https://www.i-funbox.com/), [3uTools](https://www.3u.com/) and similar tools let you browse the device's filesystem over USB and drop files in directly. Works on every supported iOS version.
+   - **Cloud storage app on the device** — Dropbox, Google Drive, Mega, etc. (available from the App Store on iOS 6+). Upload from your computer, download on the device, open the `.ipa` in Filza.
+   - **Email attachment** — mail yourself the `.ipa`, open the attachment on the device, "Open in… Filza".
+   - **AirDrop** — *iOS 8 + macOS Yosemite or later only*. Works on iPhone 5S / iPad Air / iPad mini 2 and newer running iOS 8 or 9. Not available on iOS 6 or iOS 7 (no Mac ↔ iOS AirDrop in those versions).
+   - **iCloud Drive** — *iOS 8+ only*, same caveat as AirDrop.
 
 4. **Install it.** Tap the file in your file manager (iFile / Filza) → choose **Installer** / *Install*. Or via SSH:
    ```bash
