@@ -26,6 +26,7 @@ typedef NS_ENUM(NSInteger, UpdateCheckerStatus) {
 @property (nonatomic, copy,   readonly) NSString *latestVersion;       // e.g. "1.2"
 @property (nonatomic, copy,   readonly) NSDate   *latestReleaseDate;
 @property (nonatomic, copy,   readonly) NSString *latestIpaURL;        // browser_download_url of the .ipa asset
+@property (nonatomic, copy,   readonly) NSString *latestReleaseNotes;  // raw markdown from GitHub Release body
 @property (nonatomic, copy,   readonly) NSString *errorMessage;
 @property (nonatomic, copy,   readonly) NSDate   *lastCheckedAt;
 

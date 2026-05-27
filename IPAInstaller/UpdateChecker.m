@@ -18,6 +18,7 @@ static const NSTimeInterval kCacheTTL = 3600;  // 1 hour
 @property (nonatomic, copy,   readwrite) NSString *latestVersion;
 @property (nonatomic, copy,   readwrite) NSDate   *latestReleaseDate;
 @property (nonatomic, copy,   readwrite) NSString *latestIpaURL;
+@property (nonatomic, copy,   readwrite) NSString *latestReleaseNotes;
 @property (nonatomic, copy,   readwrite) NSString *errorMessage;
 @property (nonatomic, copy,   readwrite) NSDate   *lastCheckedAt;
 @property (nonatomic, assign) BOOL isChecking;
@@ -111,6 +112,12 @@ static const NSTimeInterval kCacheTTL = 3600;  // 1 hour
         fmt.locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US_POSIX"];
         self.latestReleaseDate = [fmt dateFromString:publishedStr];
     }
+
+    // Release notes — the markdown body of the GitHub release. May be nil/empty
+    // on very old releases that had no description. (Use a distinct variable
+    // name to avoid shadowing `body` from the HTTP response NSData *.)
+    NSString *notesBody = json[@"body"];
+    self.latestReleaseNotes = [notesBody isKindOfClass:[NSString class]] ? notesBody : @"";
 
     // Pick the first .ipa asset. v1.0+ releases ship a single AppDrop-vX.Y.ipa.
     NSArray *assets = json[@"assets"];

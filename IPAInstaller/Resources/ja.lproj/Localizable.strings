@@ -220,6 +220,13 @@
 "settings.last_checked_minutes" = "%ld 分前";
 "settings.last_checked_hours" = "%ld 時間前";
 
+/* ===== v1.2 build 14 — アップデートのリリースノートモーダル ===== */
+"update_notes.title" = "新機能";
+"update_notes.install" = "インストール";
+"update_notes.header_with_date" = "v%@ — %@ にリリース";
+"update_notes.header_no_date" = "v%@";
+"update_notes.empty" = "このバージョンのリリースノートはありません。";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org アカウント";
 "settings.section_archive_footer" = "オプション。archive.org アカウントでサインインすると、ダウンロードの IP 別レート制限が緩和される可能性があります。S3 キーは次のページで取得: archive.org/account/s3.php";

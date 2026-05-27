@@ -228,6 +228,13 @@
 "settings.last_checked_minutes" = "%ld min ago";
 "settings.last_checked_hours" = "%ld h ago";
 
+/* ===== v1.2 build 14 — Update release-notes modal ===== */
+"update_notes.title" = "What's new";
+"update_notes.install" = "Install";
+"update_notes.header_with_date" = "v%@ — released %@";
+"update_notes.header_no_date" = "v%@";
+"update_notes.empty" = "No release notes provided for this version.";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org account";
 "settings.section_archive_footer" = "Optional. Sign in with your archive.org account to potentially reduce per-IP rate limiting on downloads. Get your S3 keys at: archive.org/account/s3.php";

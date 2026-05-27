@@ -220,6 +220,13 @@
 "settings.last_checked_minutes" = "%ld 分钟前";
 "settings.last_checked_hours" = "%ld 小时前";
 
+/* ===== v1.2 build 14 — 更新发行说明弹窗 ===== */
+"update_notes.title" = "新功能";
+"update_notes.install" = "安装";
+"update_notes.header_with_date" = "v%@ — 发布于 %@";
+"update_notes.header_no_date" = "v%@";
+"update_notes.empty" = "此版本未提供发行说明。";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org 账户";
 "settings.section_archive_footer" = "可选。使用你的 archive.org 账户登录，可能会减少下载时的按 IP 限速。获取 S3 密钥地址: archive.org/account/s3.php";

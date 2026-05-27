@@ -6,6 +6,7 @@
 #import "HTTPSClient.h"
 #import "Localization.h"
 #import "UpdateChecker.h"
+#import "UpdateNotesViewController.h"
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -516,20 +517,27 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     UpdateChecker *uc = [UpdateChecker shared];
     if (uc.status == UpdateCheckerStatusChecking) return;
     if (uc.status == UpdateCheckerStatusAvailable && uc.latestIpaURL.length) {
-        // Confirm before kicking off the install — it'll run via the normal
-        // InstallManager flow (parallel chunks + Range resume + FairPlay check
-        // + ipainstaller for iOS 6-9 or Documents save for iOS 10+).
-        NSString *msg = [NSString stringWithFormat:T(@"settings.install_update_msg"),
-                            uc.latestVersion,
-                            [self formattedDate:uc.latestReleaseDate]];
-        UIAlertView *alert = [[UIAlertView alloc]
-            initWithTitle:T(@"settings.install_update_title")
-                  message:msg
-                 delegate:self
-        cancelButtonTitle:T(@"common.cancel")
-        otherButtonTitles:T(@"settings.install_action"), nil];
-        alert.tag = 101;  // distinguish from Archive prompts (tag 100)
-        [alert show];
+        // Present the release-notes modal (v1.2 build 14). It renders the
+        // GitHub release body as HTML and offers a Cancel/Install pair in
+        // the nav bar. Tapping Install fires installUpdateConfirmed via the
+        // handler block.
+        UpdateNotesViewController *vc = [[UpdateNotesViewController alloc] init];
+        vc.version = uc.latestVersion;
+        vc.releaseDate = uc.latestReleaseDate;
+        vc.notesMarkdown = uc.latestReleaseNotes;
+        __weak typeof(self) weakSelf = self;
+        vc.installHandler = ^{
+            __strong typeof(self) s = weakSelf;
+            if (s) [s installUpdateConfirmed];
+        };
+        UINavigationController *nav =
+            [[UINavigationController alloc] initWithRootViewController:vc];
+        // Full-screen on iPhone (always), form-sheet (centered) on iPad
+        // for a bit of breathing room on the big screen.
+        if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
+            nav.modalPresentationStyle = UIModalPresentationFormSheet;
+        }
+        [self presentViewController:nav animated:YES completion:nil];
         return;
     }
     // Any other state → re-check.

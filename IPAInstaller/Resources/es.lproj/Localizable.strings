@@ -220,6 +220,13 @@
 "settings.last_checked_minutes" = "hace %ld min";
 "settings.last_checked_hours" = "hace %ld h";
 
+/* ===== v1.2 build 14 — Modal de notas de la actualización ===== */
+"update_notes.title" = "Novedades";
+"update_notes.install" = "Instalar";
+"update_notes.header_with_date" = "v%@ — publicada el %@";
+"update_notes.header_no_date" = "v%@";
+"update_notes.empty" = "Sin notas de versión para esta actualización.";
+
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Cuenta archive.org";
 "settings.section_archive_footer" = "Opcional. Inicia sesión con tu cuenta de archive.org para reducir potencialmente la limitación por IP en las descargas. Obtén tus claves S3 en: archive.org/account/s3.php";
