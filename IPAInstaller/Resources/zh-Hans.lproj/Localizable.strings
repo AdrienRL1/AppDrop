@@ -236,3 +236,17 @@
 "settings.archive_not_set" = "未设置";
 "settings.archive_help" = "在 archive.org/account/s3.php 获取你的密钥。留空可清除。";
 "settings.archive_save" = "保存";
+
+/* ===== v1.3.1 — 可配置下载文件夹 + 保留 IPA + 在 Filza 中打开 ===== */
+"settings.section_download_footer" = "并行流:archive.org 按 TCP 连接限速,分块可获得 3-4 倍速度(4 个流为最佳值)。保存文件夹:存档时 .ipa 的落点。保留 IPA:在成功安装后保留一份副本(仅 iOS 6-9 — iOS 10+ 因 ipainstaller 失效会自动保存)。";
+"settings.download_folder" = "保存文件夹";
+"settings.download_folder_default" = "默认(沙箱)";
+"settings.download_folder_custom" = "自定义路径…";
+"settings.download_folder_custom_msg" = "输入绝对路径,例如 /var/mobile/Documents/AppDrop。留空可恢复默认。文件夹将在首次保存时创建。";
+"settings.keep_ipa" = "安装后保留 IPA";
+"install.saved_at_suffix" = "已保存至 %@";
+"install.saved_alert_title" = "IPA 已保存";
+"install.saved_alert_msg" = "保存至:\n%@\n\n在 Filza 中打开以进行安装或保留个人收藏。";
+"install.open_in_filza" = "在 Filza 中打开";
+"install.no_filza_title" = "未检测到 Filza";
+"install.no_filza_msg" = "路径已复制到剪贴板,您可粘贴到任意文件管理器使用。";

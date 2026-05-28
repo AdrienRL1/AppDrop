@@ -236,3 +236,17 @@
 "settings.archive_not_set" = "未設定";
 "settings.archive_help" = "キーは archive.org/account/s3.php で取得できます。空欄にすると削除されます。";
 "settings.archive_save" = "保存";
+
+/* ===== v1.3.1 — 保存先フォルダ設定 + IPA保持 + Filzaで開く ===== */
+"settings.section_download_footer" = "並列ストリーム:archive.orgはTCP接続単位で帯域制限するため、分割で3-4倍速くなります(4が最適)。保存フォルダ:.ipaの保管先。IPAを保持:インストール成功後に控えを残します(iOS 6-9のみ — iOS 10+ではipainstallerが壊れているため常に保存されます)。";
+"settings.download_folder" = "保存フォルダ";
+"settings.download_folder_default" = "デフォルト(サンドボックス)";
+"settings.download_folder_custom" = "カスタムパス…";
+"settings.download_folder_custom_msg" = "絶対パスを入力してください(例:/var/mobile/Documents/AppDrop)。空のままにすると既定値に戻ります。フォルダは初回保存時に作成されます。";
+"settings.keep_ipa" = "インストール後にIPAを保持";
+"install.saved_at_suffix" = "%@ に保存しました";
+"install.saved_alert_title" = "IPAを保存しました";
+"install.saved_alert_msg" = "保存先:\n%@\n\nFilzaで開いてインストールまたはコレクションとして保管できます。";
+"install.open_in_filza" = "Filzaで開く";
+"install.no_filza_title" = "Filzaが見つかりません";
+"install.no_filza_msg" = "保存先パスをクリップボードにコピーしました。お好みのファイルマネージャーに貼り付けてください。";

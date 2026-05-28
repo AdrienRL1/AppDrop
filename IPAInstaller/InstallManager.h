@@ -2,6 +2,12 @@
 
 extern NSString *const InstallManagerJobsChangedNotification;
 
+// v1.3.1: fired once when a job's .ipa lands in the configured download folder
+// (iOS 10+ fallback, or iOS 6-9 with "Keep IPA after install" enabled).
+// userInfo: { @"savedPath": NSString *, @"jobId": NSString * }.
+// Used by the global Filza-launcher prompt in AppDelegate.
+extern NSString *const InstallManagerJobSavedNotification;
+
 @interface InstallJob : NSObject
 @property (nonatomic, copy) NSString *jobId;
 @property (nonatomic, copy) NSString *name;
@@ -20,6 +26,10 @@ extern NSString *const InstallManagerJobsChangedNotification;
 // Atomic for memory ordering (BOOL writes are word-aligned so already atomic on ARMv7,
 // but the keyword documents intent and adds a barrier).
 @property (atomic, assign) BOOL cancelRequested;
+// v1.3.1: set when the .ipa was archived to the download folder (either iOS 10+
+// fallback or the iOS 6-9 "Keep IPA" toggle). Lets observers offer a Filza
+// quick-open without re-deriving the path.
+@property (nonatomic, copy) NSString *savedPath;
 @end
 
 @interface InstallManager : NSObject
@@ -48,5 +58,10 @@ extern NSString *const InstallManagerJobsChangedNotification;
 // queued/downloading/installing state. Caller uses this to skip re-launching
 // installs the user fat-fingered on the install button.
 - (BOOL)hasActiveJobForURL:(NSString *)url;
+
+// v1.3.1: where saved .ipas land. Returns user override from NSUserDefaults
+// (Settings → Download → Save folder) when set, else +defaultDownloadFolder.
++ (NSString *)configuredDownloadFolder;
++ (NSString *)defaultDownloadFolder;
 
 @end

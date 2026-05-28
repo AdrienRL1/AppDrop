@@ -236,3 +236,17 @@
 "settings.archive_not_set" = "Sin definir";
 "settings.archive_help" = "Obtén tus claves en archive.org/account/s3.php. Deja vacío para borrar.";
 "settings.archive_save" = "Guardar";
+
+/* ===== v1.3.1 — Carpeta de descarga configurable + conservar IPA + abrir en Filza ===== */
+"settings.section_download_footer" = "Flujos paralelos: archive.org limita por conexión TCP, dividir en fragmentos da 3-4× más velocidad (4 es el punto ideal). Carpeta de guardado: dónde aterriza el .ipa al archivarlo. Conservar IPA: guarda una copia tras una instalación exitosa (iOS 6-9 — en iOS 10+ se guarda siempre porque ipainstaller está roto).";
+"settings.download_folder" = "Carpeta de guardado";
+"settings.download_folder_default" = "Predeterminada (sandbox)";
+"settings.download_folder_custom" = "Ruta personalizada…";
+"settings.download_folder_custom_msg" = "Introduce una ruta absoluta, p. ej. /var/mobile/Documents/AppDrop. Déjala vacía para volver al valor por defecto. La carpeta se crea al primer guardado.";
+"settings.keep_ipa" = "Conservar IPA tras instalar";
+"install.saved_at_suffix" = "guardado en %@";
+"install.saved_alert_title" = "IPA guardado";
+"install.saved_alert_msg" = "Guardado en:\n%@\n\nÁbrelo en Filza para instalar o para mantener una colección personal.";
+"install.open_in_filza" = "Abrir en Filza";
+"install.no_filza_title" = "Filza no detectado";
+"install.no_filza_msg" = "La ruta se copió al portapapeles para que la pegues en tu gestor de archivos preferido.";

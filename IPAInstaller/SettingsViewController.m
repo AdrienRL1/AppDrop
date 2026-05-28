@@ -29,6 +29,13 @@ typedef NS_ENUM(NSInteger, SettingsSection) {
 static const NSInteger kStreamChoices[] = { 1, 2, 4, 8 };
 static const NSInteger kStreamChoicesCount = 4;
 static NSString * const kPrefParallelStreams = @"IPAInstall.ParallelStreams";
+// v1.3.1: download-folder override + post-install archiving toggle.
+// DownloadFolder is read by InstallManager+configuredDownloadFolder and
+// defaults to <sandbox>/Documents/AppDrop when unset. KeepIPAAfterInstall
+// gates the iOS 6-9 archive path — iOS 10+ saves unconditionally because
+// ipainstaller is broken there.
+static NSString * const kPrefDownloadFolder = @"IPAInstall.DownloadFolder";
+static NSString * const kPrefKeepIPA        = @"IPAInstall.KeepIPAAfterInstall";
 // SectionLLM removed: chat AI is now Pollinations LLM (no API keys needed).
 
 // NSUserDefaults keys for archive.org S3 credentials. The secret is technically a
@@ -100,7 +107,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)s {
     if (s == SectionLanguage) return 1;
     if (s == SectionUpdates) return 2;   // installed version + latest release
-    if (s == SectionDownload) return 1;  // parallel streams
+    if (s == SectionDownload) return 3;  // parallel streams + folder + keep-ipa
     if (s == SectionArchive) return 3;   // email + access key + secret key
     if (s == SectionDiag) return 2;
     if (s == SectionCache) return 1;
@@ -121,7 +128,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 
 - (NSString *)tableView:(UITableView *)tv titleForFooterInSection:(NSInteger)s {
     if (s == SectionUpdates) return [self updatesSectionFooter];
-    if (s == SectionDownload) return T(@"settings.parallel_streams_footer");
+    if (s == SectionDownload) return T(@"settings.section_download_footer");
     if (s == SectionArchive) return T(@"settings.section_archive_footer");
     if (s == SectionDiag) return T(@"settings.section_diagnostics_footer");
     return nil;
@@ -135,6 +142,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
                                       reuseIdentifier:cid];
     }
     cell.accessoryType = UITableViewCellAccessoryNone;
+    cell.accessoryView = nil;       // v1.3.1: clear sticky UISwitch from row reuse
     cell.detailTextLabel.text = nil;
     cell.detailTextLabel.font = [UIFont systemFontOfSize:13];
     cell.selectionStyle = UITableViewCellSelectionStyleBlue;
@@ -194,15 +202,41 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
             cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
         }
     } else if (ip.section == SectionDownload) {
-        cell.textLabel.text = T(@"settings.parallel_streams");
         cell.textLabel.textColor = [UIColor blackColor];
         cell.textLabel.font = [UIFont systemFontOfSize:14];
-        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
-        NSInteger streams = [[NSUserDefaults standardUserDefaults] integerForKey:kPrefParallelStreams];
-        if (streams <= 0) streams = 4;  // default
-        cell.detailTextLabel.text = (streams == 1)
-            ? T(@"settings.streams_off")
-            : [NSString stringWithFormat:T(@"settings.streams_n"), (long)streams];
+        if (ip.row == 0) {
+            cell.textLabel.text = T(@"settings.parallel_streams");
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            NSInteger streams = [[NSUserDefaults standardUserDefaults] integerForKey:kPrefParallelStreams];
+            if (streams <= 0) streams = 4;  // default
+            cell.detailTextLabel.text = (streams == 1)
+                ? T(@"settings.streams_off")
+                : [NSString stringWithFormat:T(@"settings.streams_n"), (long)streams];
+        } else if (ip.row == 1) {
+            // Download folder — shows the active path. Default value shows
+            // a short "Default" label so it's distinct from a custom path.
+            cell.textLabel.text = T(@"settings.download_folder");
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+            NSString *custom = [[NSUserDefaults standardUserDefaults] stringForKey:kPrefDownloadFolder];
+            if (custom.length) {
+                cell.detailTextLabel.text = custom.lastPathComponent;
+            } else {
+                cell.detailTextLabel.text = T(@"settings.download_folder_default");
+            }
+        } else {
+            // Keep IPA toggle — UISwitch in the accessoryView. Selection
+            // disabled so the row doesn't flash blue on tap (user expects
+            // toggling the switch, not the row).
+            cell.textLabel.text = T(@"settings.keep_ipa");
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+            UISwitch *sw = [[UISwitch alloc] initWithFrame:CGRectZero];
+            sw.on = [[NSUserDefaults standardUserDefaults] boolForKey:kPrefKeepIPA];
+            [sw addTarget:self action:@selector(keepIPAToggled:)
+                forControlEvents:UIControlEventValueChanged];
+            cell.accessoryView = sw;
+            cell.detailTextLabel.text = nil;
+        }
     } else if (ip.section == SectionArchive) {
         cell.textLabel.textColor = [UIColor blackColor];
         cell.textLabel.font = [UIFont systemFontOfSize:14];
@@ -282,7 +316,9 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
         return;
     }
     if (ip.section == SectionDownload) {
-        [self showParallelStreamsPicker];
+        if (ip.row == 0) [self showParallelStreamsPicker];
+        else if (ip.row == 1) [self showDownloadFolderPicker];
+        // row 2 (keep-ipa toggle) is handled by the UISwitch directly.
         return;
     }
     if (ip.section == SectionArchive) {
@@ -353,6 +389,25 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
         if (buttonIndex != alert.cancelButtonIndex) {
             [self installUpdateConfirmed];
         }
+        return;
+    }
+    if (alert.tag == 102) {
+        // Custom download folder input (v1.3.1).
+        if (buttonIndex == alert.cancelButtonIndex) return;
+        UITextField *tf = [alert textFieldAtIndex:0];
+        NSString *value = [tf.text stringByTrimmingCharactersInSet:
+                            [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+        if (value.length && [value hasPrefix:@"/"]) {
+            [def setObject:value forKey:kPrefDownloadFolder];
+        } else {
+            // Empty or relative path → revert to default. Avoids landing
+            // saves in some unintended cwd.
+            [def removeObjectForKey:kPrefDownloadFolder];
+        }
+        [def synchronize];
+        [self.table reloadSections:[NSIndexSet indexSetWithIndex:SectionDownload]
+                   withRowAnimation:UITableViewRowAnimationNone];
         return;
     }
     if (alert.tag != 100) return;
@@ -573,6 +628,45 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     }];
 }
 
+#pragma mark - Download folder + keep-ipa toggle (v1.3.1)
+
+// Action sheet for the download-folder choice. Two presets + a free-form
+// custom path. Custom path is entered via a UIAlertView text input so users
+// on jailbroken devices can point to /var/mobile/Documents/AppDrop/ (browsable
+// by Filza without spelunking into the sandboxed Application/<UUID>/ path).
+- (void)showDownloadFolderPicker {
+    UIActionSheet *sheet = [[UIActionSheet alloc] initWithTitle:T(@"settings.download_folder")
+                                                       delegate:self
+                                              cancelButtonTitle:nil
+                                         destructiveButtonTitle:nil
+                                              otherButtonTitles:nil];
+    sheet.tag = 97;
+    NSString *current = [[NSUserDefaults standardUserDefaults] stringForKey:kPrefDownloadFolder];
+    BOOL hasCustom = (current.length > 0);
+
+    NSString *defaultLabel = T(@"settings.download_folder_default");
+    if (!hasCustom) defaultLabel = [defaultLabel stringByAppendingString:@" ✓"];
+    [sheet addButtonWithTitle:defaultLabel];
+
+    NSString *jbLabel = @"/var/mobile/Documents/AppDrop";
+    if (hasCustom && [current isEqualToString:jbLabel]) {
+        jbLabel = [jbLabel stringByAppendingString:@" ✓"];
+    }
+    [sheet addButtonWithTitle:jbLabel];
+
+    [sheet addButtonWithTitle:T(@"settings.download_folder_custom")];
+    [sheet addButtonWithTitle:T(@"common.cancel")];
+    sheet.cancelButtonIndex = 3;
+    [sheet showInView:self.view];
+}
+
+// UISwitch action — fires on every flip. Persists immediately so a backgrounded
+// kill doesn't lose the value.
+- (void)keepIPAToggled:(UISwitch *)sw {
+    [[NSUserDefaults standardUserDefaults] setBool:sw.on forKey:kPrefKeepIPA];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
 #pragma mark - Parallel-streams picker (v1.2 build 9)
 
 - (void)showParallelStreamsPicker {
@@ -622,6 +716,43 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 }
 
 - (void)actionSheet:(UIActionSheet *)sheet clickedButtonAtIndex:(NSInteger)idx {
+    if (sheet.tag == 97) {
+        // Download-folder picker. 0 = default, 1 = /var/mobile preset,
+        // 2 = custom (prompt), 3 = cancel.
+        if (idx == sheet.cancelButtonIndex) return;
+        NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+        if (idx == 0) {
+            // Default — clear the override so configuredDownloadFolder falls
+            // back to the sandbox path.
+            [def removeObjectForKey:kPrefDownloadFolder];
+            [def synchronize];
+            [self.table reloadSections:[NSIndexSet indexSetWithIndex:SectionDownload]
+                       withRowAnimation:UITableViewRowAnimationNone];
+        } else if (idx == 1) {
+            [def setObject:@"/var/mobile/Documents/AppDrop" forKey:kPrefDownloadFolder];
+            [def synchronize];
+            [self.table reloadSections:[NSIndexSet indexSetWithIndex:SectionDownload]
+                       withRowAnimation:UITableViewRowAnimationNone];
+        } else if (idx == 2) {
+            // Custom path — UIAlertView text input.
+            UIAlertView *a = [[UIAlertView alloc] initWithTitle:T(@"settings.download_folder_custom")
+                                                         message:T(@"settings.download_folder_custom_msg")
+                                                        delegate:self
+                                               cancelButtonTitle:T(@"common.cancel")
+                                               otherButtonTitles:T(@"settings.archive_save"), nil];
+            a.alertViewStyle = UIAlertViewStylePlainTextInput;
+            a.tag = 102;  // distinguish from archive (100) + update (101)
+            UITextField *tf = [a textFieldAtIndex:0];
+            tf.text = [def stringForKey:kPrefDownloadFolder] ?: @"";
+            tf.placeholder = @"/var/mobile/Documents/AppDrop";
+            tf.autocapitalizationType = UITextAutocapitalizationTypeNone;
+            tf.autocorrectionType = UITextAutocorrectionTypeNo;
+            tf.spellCheckingType = UITextSpellCheckingTypeNo;
+            tf.keyboardType = UIKeyboardTypeASCIICapable;
+            [a show];
+        }
+        return;
+    }
     if (sheet.tag == 98) {
         // Parallel-streams picker
         if (idx == sheet.cancelButtonIndex) return;

@@ -27,11 +27,11 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.3</string>
+    <string>1.3.1</string>
     <key>CFBundleSignature</key>
     <string>????</string>
     <key>CFBundleVersion</key>
-    <string>2</string>
+    <string>1</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
     <key>MinimumOSVersion</key>
@@ -51,6 +51,16 @@
                 <string>appdrop</string>
             </array>
         </dict>
+    </array>
+
+    <!-- v1.3.1: declare the jailbreak file managers we hand off to after a
+         save (filza://view/<path> or ifile://view/<path>). iOS 9+ enforces
+         this for canOpenURL:, iOS 6-8 ignore it harmlessly. We only need
+         the bare scheme; the path part is passed at runtime. -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>filza</string>
+        <string>ifile</string>
     </array>
     <key>UIRequiredDeviceCapabilities</key>
     <array>

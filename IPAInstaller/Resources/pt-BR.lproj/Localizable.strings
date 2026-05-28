@@ -236,3 +236,17 @@
 "settings.archive_not_set" = "Não definido";
 "settings.archive_help" = "Obtenha suas chaves em archive.org/account/s3.php. Deixe vazio para limpar.";
 "settings.archive_save" = "Salvar";
+
+/* ===== v1.3.1 — Pasta de download configurável + manter IPA + abrir no Filza ===== */
+"settings.section_download_footer" = "Conexões paralelas: archive.org limita por conexão TCP; dividir em pedaços rende 3-4× mais velocidade (4 é o ponto ideal). Pasta de salvamento: onde o .ipa fica quando arquivado. Manter IPA: guarda uma cópia após uma instalação bem-sucedida (iOS 6-9 — no iOS 10+ salva automaticamente porque o ipainstaller está quebrado).";
+"settings.download_folder" = "Pasta de salvamento";
+"settings.download_folder_default" = "Padrão (sandbox)";
+"settings.download_folder_custom" = "Caminho personalizado…";
+"settings.download_folder_custom_msg" = "Digite um caminho absoluto, por ex. /var/mobile/Documents/AppDrop. Deixe vazio para voltar ao padrão. A pasta é criada no primeiro salvamento.";
+"settings.keep_ipa" = "Manter IPA após instalar";
+"install.saved_at_suffix" = "salvo em %@";
+"install.saved_alert_title" = "IPA salvo";
+"install.saved_alert_msg" = "Salvo em:\n%@\n\nAbra no Filza para instalar ou manter uma coleção pessoal.";
+"install.open_in_filza" = "Abrir no Filza";
+"install.no_filza_title" = "Filza não encontrado";
+"install.no_filza_msg" = "O caminho foi copiado para a área de transferência — cole no gerenciador de arquivos de sua preferência.";

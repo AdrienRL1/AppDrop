@@ -11,6 +11,12 @@
 @property (nonatomic, strong) UILabel *subtitleLabel;
 @property (nonatomic, strong) UIButton *installButton;
 @property (nonatomic, strong) UITextView *infoView;
+// v1.3.1: richer download progress block under the Install button.
+// progressContainer wraps the progress view + bytes/speed label so we can
+// toggle visibility as a unit when the job leaves the downloading state.
+@property (nonatomic, strong) UIView *progressContainer;
+@property (nonatomic, strong) UIProgressView *progressBar;
+@property (nonatomic, strong) UILabel *progressLabel;
 @end
 
 @implementation AppDetailViewController
@@ -123,6 +129,34 @@
                   forControlEvents:UIControlEventTouchUpInside];
     [header addSubview:self.installButton];
 
+    // v1.3.1: live download progress under the Install button. Hidden until
+    // the job enters the downloading state, then animates the bar from 0→100
+    // and prints "%.1f / %.1f MB · %.0f KB/s" on a second line. Reddit users
+    // asked for this in the detail screen — the button title alone was too
+    // terse for the long iPad-Pro-sized download bytes count.
+    CGFloat headerH = 156;
+    UIView *header2 = header; // alias keeps the edits below local
+    self.progressContainer = [[UIView alloc] initWithFrame:CGRectMake(15, 116, w - 30, 36)];
+    self.progressContainer.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    self.progressContainer.backgroundColor = [UIColor clearColor];
+    self.progressContainer.hidden = YES;
+
+    self.progressBar = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
+    self.progressBar.frame = CGRectMake(0, 4, self.progressContainer.bounds.size.width, 9);
+    self.progressBar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    self.progressBar.progressTintColor = [IOS6Theme primaryBlue];
+    [self.progressContainer addSubview:self.progressBar];
+
+    self.progressLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 16, self.progressContainer.bounds.size.width, 18)];
+    self.progressLabel.font = [UIFont systemFontOfSize:12];
+    self.progressLabel.textColor = [UIColor darkGrayColor];
+    self.progressLabel.textAlignment = NSTextAlignmentCenter;
+    self.progressLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [self.progressContainer addSubview:self.progressLabel];
+
+    [header2 addSubview:self.progressContainer];
+    header2.frame = CGRectMake(0, 0, w, headerH);
+
     // Watch job state so the big button's TITLE reflects the live state (Téléchargement
     // 42 %, Installation…, Installé, etc.). The ring widget on catalog cells does its
     // own subscription independently.
@@ -135,7 +169,7 @@
     [self.view addSubview:header];
 
     // Info text below (offset by banner height if shown)
-    CGFloat infoY = 120;
+    CGFloat infoY = headerH;
     self.infoView = [[UITextView alloc] initWithFrame:CGRectMake(0, infoY, w, b.size.height - infoY)];
     self.infoView.backgroundColor = [IOS6Theme contentBackgroundColor];
     self.infoView.font = [UIFont systemFontOfSize:13];
@@ -279,6 +313,59 @@
         title = T(@"app.install");
     }
     [self.installButton setTitle:title forState:UIControlStateNormal];
+
+    // v1.3.1: drive the progress widget. Visible during downloading/installing.
+    // Hidden for idle/queued/completed/failed/cancelled to keep the screen clean.
+    BOOL showProgress = [state isEqualToString:@"downloading"]
+                     || [state isEqualToString:@"installing"];
+    self.progressContainer.hidden = !showProgress;
+    if (!showProgress) return;
+
+    if ([state isEqualToString:@"installing"]) {
+        // ipainstaller is opaque about progress — just show a full bar +
+        // generic "Installing…" label. Faster reassuring feedback than a
+        // half-filled bar that doesn't move.
+        [self.progressBar setProgress:1.0 animated:NO];
+        self.progressLabel.text = T(@"app.btn.installing");
+        return;
+    }
+
+    // Downloading state. Animate the bar; build a "12.3 / 45.6 MB · 320 KB/s"
+    // label from the byte counters InstallManager fills in for ETA tracking.
+    float frac = MAX(0.0f, MIN(1.0f, (float)job.progress / 100.0f));
+    [self.progressBar setProgress:frac animated:YES];
+
+    NSString *bytesPart;
+    if (job.totalBytes > 0) {
+        bytesPart = [NSString stringWithFormat:@"%@ / %@",
+                       [self humanSize:job.currentBytes],
+                       [self humanSize:job.totalBytes]];
+    } else if (job.currentBytes > 0) {
+        bytesPart = [self humanSize:job.currentBytes];
+    } else {
+        bytesPart = nil;
+    }
+
+    NSString *speedPart = nil;
+    if (job.bytesPerSec > 1024.0) {
+        // Speed in KB/s for readability — most archive.org mirrors land
+        // between 50 KB/s and 2 MB/s on a typical home connection.
+        if (job.bytesPerSec >= 1024.0 * 1024.0) {
+            speedPart = [NSString stringWithFormat:@"%.1f %@/s",
+                           job.bytesPerSec / (1024.0 * 1024.0), T(@"unit.mb")];
+        } else {
+            speedPart = [NSString stringWithFormat:@"%.0f %@/s",
+                           job.bytesPerSec / 1024.0, T(@"unit.kb")];
+        }
+    }
+
+    if (bytesPart && speedPart) {
+        self.progressLabel.text = [NSString stringWithFormat:@"%@ · %@", bytesPart, speedPart];
+    } else if (bytesPart) {
+        self.progressLabel.text = bytesPart;
+    } else {
+        self.progressLabel.text = [NSString stringWithFormat:@"%ld%%", (long)job.progress];
+    }
 }
 
 - (void)dealloc {

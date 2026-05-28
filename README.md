@@ -19,7 +19,7 @@
 ## Compatibility
 
 - **iOS 6.0 – 9.3.6** (armv7 / 32-bit) — fully supported and tested.
-- **iOS 10.x** — *experimental* (untested by the author, feedback welcome). Downloads work normally, but `ipainstaller` is broken on iOS 10 (Apple-side `dyld` regression — silent failures), so AppDrop saves the `.ipa` to its `Documents/AppDrop/` folder and you install manually via Filza or iFile. The path is shown in the install screen when it completes. Documents folder auto-sweeps anything older than 14 days or beyond 500 MB total at launch.
+- **iOS 10.x** — *confirmed working* on iOS 10.3.3 (iPad mini 2, reported by a Reddit user). `ipainstaller` is broken on iOS 10 (Apple-side `dyld` regression — silent failures), so AppDrop saves the `.ipa` to its `Documents/AppDrop/` folder instead and you install manually via Filza. From v1.3.1 onwards the save path is configurable, and a "Keep IPA after install" toggle on iOS 6-9 lets you archive a personal collection. Conflicts are auto-resolved with `(2)`, `(3)`, … suffixes instead of overwriting.
 - **iOS 11+** — not supported. The binary is 32-bit only and Apple dropped 32-bit app support in iOS 11.
 - Compatible devices: iPhone 4S, iPad 2 / 3 / 4 / iPad mini, iPod touch 5 (and 64-bit devices like iPad Air / iPhone 5S running iOS 10.3.3 or lower).
 - Requires a **jailbreak** with one of these helper packages installed from Cydia (iOS 6-9 only):

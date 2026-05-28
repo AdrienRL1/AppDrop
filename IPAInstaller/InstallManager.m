@@ -10,6 +10,7 @@
 extern char **environ;
 
 NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChangedNotification";
+NSString *const InstallManagerJobSavedNotification     = @"InstallManagerJobSavedNotification";
 // Legacy keys kept so old preference values are silently ignored (no migration needed):
 // IPAInstall.BackendURL, IPAInstall.AutonomousMode — both unused since v1.5.3.
 
@@ -23,6 +24,7 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
 - (void)attemptDownloadForJob:(InstallJob *)job
                     localPath:(NSString *)localPath
                       attempt:(int)attempt;
+- (void)postSavedNotificationForJob:(InstallJob *)job;
 @end
 
 @implementation InstallManager
@@ -320,14 +322,60 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     });
 }
 
-// Save a downloaded .ipa into our app's Documents folder so the user can
-// recover it (open in Filza/iFile) when auto-install can't run. Used in two
-// cases: (1) iOS 10+ where ipainstaller is broken, (2) install failure on
-// any iOS so the .ipa isn't lost. Returns the absolute destination path, or
-// nil on copy failure.
-+ (NSString *)saveIPAToDocuments:(NSString *)sourcePath originalURL:(NSString *)url {
+// Returns the user-configured download folder (Settings → Download → Save
+// folder), or the default Documents/AppDrop/ if unset. Always returns an
+// absolute path. Directory is created lazily on first save.
++ (NSString *)configuredDownloadFolder {
+    NSString *custom = [[NSUserDefaults standardUserDefaults] stringForKey:@"IPAInstall.DownloadFolder"];
+    if (custom.length) return custom;
     NSString *docsRoot = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
-    NSString *destDir = [docsRoot stringByAppendingPathComponent:@"AppDrop"];
+    return [docsRoot stringByAppendingPathComponent:@"AppDrop"];
+}
+
+// Returns the default download folder (sandbox Documents/AppDrop/) regardless
+// of the user's override. Used by Settings UI to display "Default (xyz)".
++ (NSString *)defaultDownloadFolder {
+    NSString *docsRoot = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    return [docsRoot stringByAppendingPathComponent:@"AppDrop"];
+}
+
+// Find a destination path that doesn't clash with an existing file at
+// preferredPath. Returns preferredPath if no file exists there, otherwise
+// "Name (2).ext" / "Name (3).ext" / ... up to (999). Reported by a Reddit
+// user archiving multiple downloads on iOS 10.3.3.
++ (NSString *)nonClashingPathFor:(NSString *)preferredPath {
+    NSFileManager *fm = [NSFileManager defaultManager];
+    if (![fm fileExistsAtPath:preferredPath]) return preferredPath;
+    NSString *dir = [preferredPath stringByDeletingLastPathComponent];
+    NSString *base = [[preferredPath lastPathComponent] stringByDeletingPathExtension];
+    NSString *ext = [preferredPath pathExtension];
+    for (NSInteger n = 2; n < 1000; n++) {
+        NSString *candidate = ext.length
+            ? [dir stringByAppendingPathComponent:
+                  [NSString stringWithFormat:@"%@ (%ld).%@", base, (long)n, ext]]
+            : [dir stringByAppendingPathComponent:
+                  [NSString stringWithFormat:@"%@ (%ld)", base, (long)n]];
+        if (![fm fileExistsAtPath:candidate]) return candidate;
+    }
+    return nil;  // give up after 999 dupes — extremely unlikely
+}
+
+// Save a downloaded .ipa into the user's configured download folder so they
+// can recover it (open in Filza/iFile) when auto-install can't run, or
+// archive a personal collection of installed apps. Used in three cases now:
+// (1) iOS 10+ where ipainstaller is broken (mandatory), (2) iOS 6-9 success
+// when the "Keep IPA after install" toggle is on, (3) install failure on
+// any iOS so the .ipa isn't lost (also gated by toggle).
+//
+// Conflict policy: appends " (2)", " (3)", … instead of overwriting. The
+// previous behaviour silently overwrote, which made batch-archiving useless.
+//
+// `sourcePath` is moved (or copied, if cross-volume) — caller doesn't need
+// to clean it up afterward. Returns the actual destination path (which may
+// differ from the requested name due to conflict resolution), or nil on
+// failure.
++ (NSString *)saveIPAToDocuments:(NSString *)sourcePath originalURL:(NSString *)url {
+    NSString *destDir = [self configuredDownloadFolder];
     NSFileManager *fm = [NSFileManager defaultManager];
     [fm createDirectoryAtPath:destDir withIntermediateDirectories:YES
                     attributes:nil error:nil];
@@ -339,12 +387,16 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
     NSString *lastComp = [url lastPathComponent];
     NSString *decoded = [lastComp stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
     NSString *filename = decoded.length ? decoded : (lastComp.length ? lastComp : @"app.ipa");
-    NSString *destPath = [destDir stringByAppendingPathComponent:filename];
-    // If a previous copy exists with same name, remove it before moving the new one.
-    [fm removeItemAtPath:destPath error:nil];
+    NSString *preferredPath = [destDir stringByAppendingPathComponent:filename];
+    NSString *destPath = [self nonClashingPathFor:preferredPath];
+    if (!destPath) {
+        NSLog(@"[InstallManager] saveIPAToDocuments: 999 name conflicts at %@", destDir);
+        return nil;
+    }
     NSError *moveErr = nil;
     if (![fm moveItemAtPath:sourcePath toPath:destPath error:&moveErr]) {
-        // Move failed (e.g. cross-volume) — try copy as fallback.
+        // Move failed (e.g. cross-volume, custom folder is /var/mobile/...).
+        // Fall back to copy + delete the source.
         if (![fm copyItemAtPath:sourcePath toPath:destPath error:&moveErr]) {
             NSLog(@"[InstallManager] saveIPAToDocuments failed: %@", moveErr);
             return nil;
@@ -554,6 +606,8 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
                     job.state = @"completed";  // really "saved" but using completed for UI parity
                     job.progress = 100;
                     job.message = [NSString stringWithFormat:T(@"install.modern_ios_msg"), saved];
+                    job.savedPath = saved;
+                    [self postSavedNotificationForJob:job];
                 } else {
                     job.state = @"failed";
                     job.message = [NSString stringWithFormat:T(@"install.error.failed_prefix"),
@@ -587,8 +641,34 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
                         ? [out substringWithRange:[m rangeAtIndex:1]]
                         : @"app";
                     job.message = [NSString stringWithFormat:T(@"install.state.installed_prefix"), name];
-                    // Success: delete the temp .ipa, we no longer need it.
-                    [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
+                    // v1.3.1: optionally archive the .ipa to the configured download
+                    // folder when the user has flipped "Keep IPA after install" in
+                    // Settings. Lets users build a personal collection on iOS 6-9
+                    // (the iOS 10+ branch saves unconditionally because ipainstaller
+                    // is broken there). Default is OFF — we delete the temp file to
+                    // avoid surprising the sandbox with multi-GB Documents/ growth.
+                    BOOL keepIpa = [[NSUserDefaults standardUserDefaults]
+                                     boolForKey:@"IPAInstall.KeepIPAAfterInstall"];
+                    if (keepIpa) {
+                        NSString *saved = [InstallManager saveIPAToDocuments:localPath
+                                                                  originalURL:job.url];
+                        // saveIPAToDocuments moves the source on success (consumes
+                        // localPath). On failure (nil) the temp may still be around,
+                        // so clear it explicitly — we don't want garbage in tmp.
+                        if (saved) {
+                            job.message = [NSString stringWithFormat:@"%@ — %@",
+                                            job.message,
+                                            [NSString stringWithFormat:
+                                                T(@"install.saved_at_suffix"), saved]];
+                            job.savedPath = saved;
+                            [self postSavedNotificationForJob:job];
+                        } else {
+                            [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
+                        }
+                    } else {
+                        // Success: delete the temp .ipa, we no longer need it.
+                        [[NSFileManager defaultManager] removeItemAtPath:localPath error:nil];
+                    }
                 } else {
                     // Install failure: delete the .ipa (user feedback v1.2 — they don't
                     // want failed-install .ipas accumulating in Documents/). Users on
@@ -854,6 +934,18 @@ NSString *const InstallManagerJobsChangedNotification = @"InstallManagerJobsChan
 - (void)postChanged {
     [[NSNotificationCenter defaultCenter] postNotificationName:InstallManagerJobsChangedNotification
                                                         object:self];
+}
+
+// v1.3.1: fired once per save. AppDelegate observes globally and pops a
+// "Open in Filza" prompt. Posted on the main queue (callers above are already
+// on main via dispatch_async).
+- (void)postSavedNotificationForJob:(InstallJob *)job {
+    if (!job.savedPath.length) return;
+    NSDictionary *info = @{ @"savedPath": job.savedPath,
+                            @"jobId":     job.jobId ?: @"" };
+    [[NSNotificationCenter defaultCenter] postNotificationName:InstallManagerJobSavedNotification
+                                                        object:self
+                                                      userInfo:info];
 }
 
 @end

@@ -236,3 +236,17 @@
 "settings.archive_not_set" = "Nicht festgelegt";
 "settings.archive_help" = "Schlüssel holen unter archive.org/account/s3.php. Leer lassen zum Löschen.";
 "settings.archive_save" = "Speichern";
+
+/* ===== v1.3.1 — Konfigurierbarer Download-Ordner + IPA behalten + In Filza öffnen ===== */
+"settings.section_download_footer" = "Parallele Streams: archive.org drosselt pro TCP-Verbindung, eine Aufteilung in Chunks bringt 3-4× mehr Tempo (4 ist der Idealwert). Speicherordner: wohin die .ipa beim Archivieren wandert. IPA behalten: nach einer erfolgreichen Installation eine Kopie aufheben (nur iOS 6-9 — unter iOS 10+ wird automatisch gespeichert, da ipainstaller dort kaputt ist).";
+"settings.download_folder" = "Speicherordner";
+"settings.download_folder_default" = "Standard (Sandbox)";
+"settings.download_folder_custom" = "Eigener Pfad…";
+"settings.download_folder_custom_msg" = "Absoluten Pfad eingeben, z. B. /var/mobile/Documents/AppDrop. Leer lassen, um zum Standard zurückzukehren. Der Ordner wird beim ersten Speichern erstellt.";
+"settings.keep_ipa" = "IPA nach Installation behalten";
+"install.saved_at_suffix" = "gespeichert unter %@";
+"install.saved_alert_title" = "IPA gespeichert";
+"install.saved_alert_msg" = "Gespeichert unter:\n%@\n\nÖffne sie in Filza zum Installieren oder zum Aufbewahren einer persönlichen Sammlung.";
+"install.open_in_filza" = "In Filza öffnen";
+"install.no_filza_title" = "Filza nicht erkannt";
+"install.no_filza_msg" = "Der Pfad wurde in die Zwischenablage kopiert, sodass du ihn in deinem bevorzugten Dateimanager einfügen kannst.";

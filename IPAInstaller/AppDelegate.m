@@ -9,6 +9,14 @@
 #import "Localization.h"
 #import "UpdateChecker.h"
 
+// v1.3.1: alert delegate so the AppDelegate can react to the Filza-launch
+// confirmation. The dismissed-path is stored on the alert itself (via tag
+// + an associated property) so we can fire filza://view/<path> at the right
+// time without re-deriving anything from the notification userInfo.
+@interface AppDelegate () <UIAlertViewDelegate>
+@property (nonatomic, copy) NSString *pendingFilzaPath;
+@end
+
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
@@ -71,6 +79,15 @@
     [self refreshSettingsTabBadge];  // initial state (probably no badge yet)
     [[UpdateChecker shared] checkForUpdates:NO];
 
+    // v1.3.1: pop an "Open in Filza?" prompt whenever InstallManager archives
+    // a .ipa. Fires for iOS 10+ (always) and iOS 6-9 when "Keep IPA after
+    // install" is on. The alert is global (UIAlertView is window-level) so it
+    // appears regardless of which tab the user is on.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                              selector:@selector(installManagerSaved:)
+                                                  name:InstallManagerJobSavedNotification
+                                                object:nil];
+
     // v2.0.9 — show the catalog-quality reminder at every cold launch. The upstream
     // catalog has a small fraction of rows with wrong title or icon (out of our control,
     // it's a data issue at stuffed18.github.io). The user explicitly asked for this to
@@ -110,6 +127,62 @@
     UpdateChecker *uc = [UpdateChecker shared];
     settingsNav.tabBarItem.badgeValue =
         (uc.status == UpdateCheckerStatusAvailable) ? @"1" : nil;
+}
+
+// v1.3.1: hook for the "Open in Filza?" prompt. Posted by InstallManager after
+// each archive save. We try filza://view/<path> on the user's tap; falls back
+// silently if Filza isn't installed (UIApplication openURL: returns NO).
+- (void)installManagerSaved:(NSNotification *)note {
+    NSString *path = note.userInfo[@"savedPath"];
+    if (!path.length) return;
+    self.pendingFilzaPath = path;
+    NSString *body = [NSString stringWithFormat:T(@"install.saved_alert_msg"), path];
+    UIAlertView *a = [[UIAlertView alloc] initWithTitle:T(@"install.saved_alert_title")
+                                                 message:body
+                                                delegate:self
+                                       cancelButtonTitle:T(@"common.ok")
+                                       otherButtonTitles:T(@"install.open_in_filza"), nil];
+    a.tag = 200;  // distinct from any per-VC tag
+    [a show];
+}
+
+- (void)alertView:(UIAlertView *)alert clickedButtonAtIndex:(NSInteger)buttonIndex {
+    if (alert.tag != 200) return;
+    if (buttonIndex == alert.cancelButtonIndex) {
+        self.pendingFilzaPath = nil;
+        return;
+    }
+    NSString *path = self.pendingFilzaPath;
+    self.pendingFilzaPath = nil;
+    if (!path.length) return;
+
+    // Percent-encode the path for use as a URL component. Filza expects
+    // filza://view/<absolute path>; spaces, ampersands, etc. must be escaped.
+    NSString *encoded = [path stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    if (!encoded) encoded = path;
+
+    UIApplication *app = [UIApplication sharedApplication];
+    NSURL *filza = [NSURL URLWithString:[@"filza://view/" stringByAppendingString:encoded]];
+    NSURL *ifile = [NSURL URLWithString:[@"ifile://view/" stringByAppendingString:encoded]];
+    if (filza && [app canOpenURL:filza]) {
+        [app openURL:filza];
+        return;
+    }
+    if (ifile && [app canOpenURL:ifile]) {
+        [app openURL:ifile];
+        return;
+    }
+    // Neither is installed (or LSApplicationQueriesSchemes hides them on iOS 9+).
+    // Stash the path on the system pasteboard so the user can paste it into
+    // whichever file manager they prefer.
+    [UIPasteboard generalPasteboard].string = path;
+    UIAlertView *fallback = [[UIAlertView alloc]
+        initWithTitle:T(@"install.no_filza_title")
+              message:T(@"install.no_filza_msg")
+             delegate:nil
+    cancelButtonTitle:T(@"common.ok")
+    otherButtonTitles:nil];
+    [fallback show];
 }
 
 // Kept as a private helper in case future code needs to surface a system-wide alert
