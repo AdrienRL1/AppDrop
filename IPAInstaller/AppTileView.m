@@ -31,31 +31,22 @@ static UIImage *_sharedCheckOff = nil;
     CGFloat scale = [UIScreen mainScreen].scale;
     UIGraphicsBeginImageContextWithOptions(size, YES, scale);
     CGContextRef ctx = UIGraphicsGetCurrentContext();
-    if ([IOS6Theme useFlatStyle]) {
-        // iOS 7+: flat white tile with a hairline border. No vertical gradient
-        // — iOS 7+ apps are expected to be flat, the gradient looks dated.
-        CGContextSetRGBFillColor(ctx, 1.0, 1.0, 1.0, 1.0);
-        CGContextFillRect(ctx, CGRectMake(0, 0, size.width, size.height));
-        CGContextSetRGBStrokeColor(ctx, 0.87, 0.87, 0.90, 1.0);
-        CGContextSetLineWidth(ctx, 1.0 / scale);
-        CGContextStrokeRect(ctx, CGRectMake(0.5, 0.5, size.width - 1, size.height - 1));
-    } else {
-        // iOS 6: subtle top-light → mid-light vertical gradient + 1 px gray
-        // border. Matches the iOS 6 App Store / grouped-table aesthetic.
-        CGFloat colors[] = {
-            1.00, 1.00, 1.00, 1.0,
-            0.94, 0.95, 0.97, 1.0,
-        };
-        CGFloat locs[] = { 0.0, 1.0 };
-        CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
-        CGGradientRef g = CGGradientCreateWithColorComponents(cs, colors, locs, 2);
-        CGContextDrawLinearGradient(ctx, g, CGPointMake(0, 0), CGPointMake(0, size.height), 0);
-        CGGradientRelease(g);
-        CGColorSpaceRelease(cs);
-        CGContextSetRGBStrokeColor(ctx, 0.72, 0.74, 0.78, 1.0);
-        CGContextSetLineWidth(ctx, 1.0);
-        CGContextStrokeRect(ctx, CGRectMake(0.5, 0.5, size.width - 1, size.height - 1));
-    }
+    // v1.3.2.1: iOS 6 design unconditionally — subtle top-light → mid-light
+    // vertical gradient + 1 px gray border. (The v1.3 iOS-7+ flat branch was
+    // removed per user request to keep the iOS 6 aesthetic on every device.)
+    CGFloat colors[] = {
+        1.00, 1.00, 1.00, 1.0,
+        0.94, 0.95, 0.97, 1.0,
+    };
+    CGFloat locs[] = { 0.0, 1.0 };
+    CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
+    CGGradientRef g = CGGradientCreateWithColorComponents(cs, colors, locs, 2);
+    CGContextDrawLinearGradient(ctx, g, CGPointMake(0, 0), CGPointMake(0, size.height), 0);
+    CGGradientRelease(g);
+    CGColorSpaceRelease(cs);
+    CGContextSetRGBStrokeColor(ctx, 0.72, 0.74, 0.78, 1.0);
+    CGContextSetLineWidth(ctx, 1.0);
+    CGContextStrokeRect(ctx, CGRectMake(0.5, 0.5, size.width - 1, size.height - 1));
     UIImage *img = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
     _sharedTileBg = img;

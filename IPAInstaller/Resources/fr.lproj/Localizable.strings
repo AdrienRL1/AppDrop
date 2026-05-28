@@ -55,7 +55,7 @@
 /* ===== Settings screen ===== */
 "settings.title" = "Réglages";
 "settings.section_diagnostics" = "Diagnostics";
-"settings.section_diagnostics_footer" = "Teste si l'iPad peut joindre archive.org en HTTPS direct (nécessaire pour installer une IPA) et si le binaire ipainstaller répond depuis l'app.";
+"settings.section_diagnostics_footer" = "Vérifie l'accès HTTPS à archive.org et la présence d'ipainstaller.";
 "settings.section_cache" = "Cache";
 "settings.section_about" = "À propos";
 "settings.test_https" = "Tester HTTPS direct vers archive.org";
@@ -237,16 +237,16 @@
 
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Compte archive.org";
-"settings.section_archive_footer" = "Optionnel. Connecte-toi à ton compte archive.org pour potentiellement réduire la limitation par IP lors de téléchargements. Récupère tes clés S3 à : archive.org/account/s3.php";
+"settings.section_archive_footer" = "Optionnel. Réduit le throttling par IP. Clés à : archive.org/account/s3.php";
 "settings.archive_email" = "Email";
-"settings.archive_access_key" = "Clé d'accès (Access Key)";
-"settings.archive_secret_key" = "Clé secrète (Secret Key)";
+"settings.archive_access_key" = "Clé d'accès";
+"settings.archive_secret_key" = "Clé secrète";
 "settings.archive_not_set" = "Non défini";
 "settings.archive_help" = "Récupère tes clés à archive.org/account/s3.php. Laisse vide pour effacer.";
 "settings.archive_save" = "Enregistrer";
 
 /* ===== v1.3.1 — Dossier configurable + conserver l'IPA + ouverture Filza ===== */
-"settings.section_download_footer" = "Flux parallèles : archive.org limite par connexion TCP, fractionner la requête donne 3-4× plus de vitesse (4 est le meilleur compromis). Dossier de sauvegarde : où le .ipa atterrit lors de l'archivage. Conserver l'IPA : garder une copie après une installation réussie (iOS 6-9 uniquement — sur iOS 10+, l'IPA est sauvegardé automatiquement car ipainstaller y est cassé).";
+"settings.section_download_footer" = "Flux parallèles : 4 est le meilleur compromis pour archive.org. Dossier de sauvegarde : où atterrissent les .ipa archivés. Conserver l'IPA : garder une copie après installation (iOS 6-9 ; iOS 10+ sauvegarde automatiquement).";
 "settings.download_folder" = "Dossier de sauvegarde";
 "settings.download_folder_default" = "Par défaut (sandbox)";
 "settings.download_folder_custom" = "Chemin personnalisé…";
@@ -254,7 +254,7 @@
 "settings.keep_ipa" = "Conserver l'IPA après installation";
 "install.saved_at_suffix" = "sauvegardé sous %@";
 "install.saved_alert_title" = "IPA sauvegardé";
-"install.saved_alert_msg" = "Enregistré sous :\n%@\n\nOuvrez-le dans Filza pour l'installer ou pour le conserver dans votre collection.";
+"install.saved_alert_msg" = "Enregistré sous :\n%@\n\nOuvre-le dans Filza pour installer. Si Filza échoue avec une erreur de signature (0xe800B001), installe le paquet « appinst » depuis Cydia et réessaie.";
 "install.open_in_filza" = "Ouvrir dans Filza";
 "install.no_filza_title" = "Filza introuvable";
 "install.no_filza_msg" = "Le chemin a été copié dans le presse-papiers, vous pouvez le coller dans le gestionnaire de fichiers de votre choix.";

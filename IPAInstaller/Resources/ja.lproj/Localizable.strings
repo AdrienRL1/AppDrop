@@ -49,7 +49,7 @@
 
 "settings.title" = "設定";
 "settings.section_diagnostics" = "診断";
-"settings.section_diagnostics_footer" = "iPad が archive.org に直接 HTTPS でアクセスできるか (IPA インストールに必要)、および ipainstaller バイナリがアプリから応答するかをテストします。";
+"settings.section_diagnostics_footer" = "archive.orgへのHTTPSアクセスとipainstallerの有無を確認。";
 "settings.section_cache" = "キャッシュ";
 "settings.section_about" = "情報";
 "settings.test_https" = "archive.org への直接 HTTPS をテスト";
@@ -229,16 +229,16 @@
 
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org アカウント";
-"settings.section_archive_footer" = "オプション。archive.org アカウントでサインインすると、ダウンロードの IP 別レート制限が緩和される可能性があります。S3 キーは次のページで取得: archive.org/account/s3.php";
+"settings.section_archive_footer" = "任意。IP別レート制限を軽減。キーは: archive.org/account/s3.php";
 "settings.archive_email" = "メールアドレス";
-"settings.archive_access_key" = "アクセスキー (Access Key)";
-"settings.archive_secret_key" = "シークレットキー (Secret Key)";
+"settings.archive_access_key" = "アクセスキー";
+"settings.archive_secret_key" = "シークレットキー";
 "settings.archive_not_set" = "未設定";
 "settings.archive_help" = "キーは archive.org/account/s3.php で取得できます。空欄にすると削除されます。";
 "settings.archive_save" = "保存";
 
 /* ===== v1.3.1 — 保存先フォルダ設定 + IPA保持 + Filzaで開く ===== */
-"settings.section_download_footer" = "並列ストリーム:archive.orgはTCP接続単位で帯域制限するため、分割で3-4倍速くなります(4が最適)。保存フォルダ:.ipaの保管先。IPAを保持:インストール成功後に控えを残します(iOS 6-9のみ — iOS 10+ではipainstallerが壊れているため常に保存されます)。";
+"settings.section_download_footer" = "並列ストリーム:archive.orgには4が最適。保存フォルダ:.ipaの保管先。IPAを保持:インストール後に控えを残す(iOS 6-9のみ — iOS 10+は自動保存)。";
 "settings.download_folder" = "保存フォルダ";
 "settings.download_folder_default" = "デフォルト(サンドボックス)";
 "settings.download_folder_custom" = "カスタムパス…";
@@ -246,7 +246,7 @@
 "settings.keep_ipa" = "インストール後にIPAを保持";
 "install.saved_at_suffix" = "%@ に保存しました";
 "install.saved_alert_title" = "IPAを保存しました";
-"install.saved_alert_msg" = "保存先:\n%@\n\nFilzaで開いてインストールまたはコレクションとして保管できます。";
+"install.saved_alert_msg" = "保存先:\n%@\n\nFilzaで開いてインストール。Filzaが署名エラー(0xe800B001)で失敗する場合は、Cydiaから「appinst」パッケージをインストールして再試行してください。";
 "install.open_in_filza" = "Filzaで開く";
 "install.no_filza_title" = "Filzaが見つかりません";
 "install.no_filza_msg" = "保存先パスをクリップボードにコピーしました。お好みのファイルマネージャーに貼り付けてください。";

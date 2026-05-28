@@ -49,7 +49,7 @@
 
 "settings.title" = "Ajustes";
 "settings.section_diagnostics" = "Diagnósticos";
-"settings.section_diagnostics_footer" = "Testa se o iPad consegue acessar archive.org via HTTPS direto (necessário para instalar IPA) e se o binário ipainstaller responde do app.";
+"settings.section_diagnostics_footer" = "Verifica o acesso HTTPS a archive.org e a presença do ipainstaller.";
 "settings.section_cache" = "Cache";
 "settings.section_about" = "Sobre";
 "settings.test_https" = "Testar HTTPS direto para archive.org";
@@ -229,16 +229,16 @@
 
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Conta archive.org";
-"settings.section_archive_footer" = "Opcional. Entre com sua conta do archive.org para reduzir potencialmente a limitação por IP nos downloads. Obtenha suas chaves S3 em: archive.org/account/s3.php";
+"settings.section_archive_footer" = "Opcional. Reduz o limite por IP. Chaves em: archive.org/account/s3.php";
 "settings.archive_email" = "E-mail";
-"settings.archive_access_key" = "Chave de acesso (Access Key)";
-"settings.archive_secret_key" = "Chave secreta (Secret Key)";
+"settings.archive_access_key" = "Chave de acesso";
+"settings.archive_secret_key" = "Chave secreta";
 "settings.archive_not_set" = "Não definido";
 "settings.archive_help" = "Obtenha suas chaves em archive.org/account/s3.php. Deixe vazio para limpar.";
 "settings.archive_save" = "Salvar";
 
 /* ===== v1.3.1 — Pasta de download configurável + manter IPA + abrir no Filza ===== */
-"settings.section_download_footer" = "Conexões paralelas: archive.org limita por conexão TCP; dividir em pedaços rende 3-4× mais velocidade (4 é o ponto ideal). Pasta de salvamento: onde o .ipa fica quando arquivado. Manter IPA: guarda uma cópia após uma instalação bem-sucedida (iOS 6-9 — no iOS 10+ salva automaticamente porque o ipainstaller está quebrado).";
+"settings.section_download_footer" = "Conexões paralelas: 4 é o ideal para archive.org. Pasta de salvamento: onde os .ipa arquivados ficam. Manter IPA: salvar cópia após instalar (iOS 6-9; iOS 10+ salva automaticamente).";
 "settings.download_folder" = "Pasta de salvamento";
 "settings.download_folder_default" = "Padrão (sandbox)";
 "settings.download_folder_custom" = "Caminho personalizado…";
@@ -246,7 +246,7 @@
 "settings.keep_ipa" = "Manter IPA após instalar";
 "install.saved_at_suffix" = "salvo em %@";
 "install.saved_alert_title" = "IPA salvo";
-"install.saved_alert_msg" = "Salvo em:\n%@\n\nAbra no Filza para instalar ou manter uma coleção pessoal.";
+"install.saved_alert_msg" = "Salvo em:\n%@\n\nAbra no Filza para instalar. Se o Filza falhar com erro de assinatura (0xe800B001), instale o pacote “appinst” da Cydia e tente de novo.";
 "install.open_in_filza" = "Abrir no Filza";
 "install.no_filza_title" = "Filza não encontrado";
 "install.no_filza_msg" = "O caminho foi copiado para a área de transferência — cole no gerenciador de arquivos de sua preferência.";

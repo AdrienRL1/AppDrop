@@ -55,7 +55,7 @@
 /* ===== Settings screen ===== */
 "settings.title" = "Settings";
 "settings.section_diagnostics" = "Diagnostics";
-"settings.section_diagnostics_footer" = "Tests whether the iPad can reach archive.org via direct HTTPS (required to install an IPA) and whether the ipainstaller binary responds from the app.";
+"settings.section_diagnostics_footer" = "Checks HTTPS access to archive.org and the presence of ipainstaller.";
 "settings.section_cache" = "Cache";
 "settings.section_about" = "About";
 "settings.test_https" = "Test direct HTTPS to archive.org";
@@ -237,7 +237,7 @@
 
 /* ===== v1.2 — archive.org S3 login (optional, helps with throttling) ===== */
 "settings.section_archive" = "Archive.org account";
-"settings.section_archive_footer" = "Optional. Sign in with your archive.org account to potentially reduce per-IP rate limiting on downloads. Get your S3 keys at: archive.org/account/s3.php";
+"settings.section_archive_footer" = "Optional. Reduces per-IP throttling. Keys at: archive.org/account/s3.php";
 "settings.archive_email" = "Email";
 "settings.archive_access_key" = "Access Key";
 "settings.archive_secret_key" = "Secret Key";
@@ -246,7 +246,7 @@
 "settings.archive_save" = "Save";
 
 /* ===== v1.3.1 — Configurable download folder + keep-IPA toggle + Filza launch ===== */
-"settings.section_download_footer" = "Parallel streams: archive.org throttles per TCP connection, splitting into chunks yields 3-4× the speed (4 is the sweet spot). Save folder: where the .ipa lands when archived. Keep IPA: archive a copy after a successful install (iOS 6-9 only — iOS 10+ saves automatically because ipainstaller is broken there).";
+"settings.section_download_footer" = "Parallel streams: 4 is the sweet spot for archive.org. Save folder: where archived .ipas land. Keep IPA: archive a copy after install (iOS 6-9; iOS 10+ saves automatically).";
 "settings.download_folder" = "Save folder";
 "settings.download_folder_default" = "Default (sandbox)";
 "settings.download_folder_custom" = "Custom path…";
@@ -254,7 +254,7 @@
 "settings.keep_ipa" = "Keep IPA after install";
 "install.saved_at_suffix" = "saved at %@";
 "install.saved_alert_title" = "IPA saved";
-"install.saved_alert_msg" = "Saved to:\n%@\n\nOpen it in Filza to install or to keep a personal collection.";
+"install.saved_alert_msg" = "Saved to:\n%@\n\nOpen it in Filza to install. If Filza fails with a signature error (0xe800B001), install the “appinst” package from Cydia and retry.";
 "install.open_in_filza" = "Open in Filza";
 "install.no_filza_title" = "Filza not detected";
 "install.no_filza_msg" = "The save path has been copied to your clipboard so you can paste it into whichever file manager you use.";

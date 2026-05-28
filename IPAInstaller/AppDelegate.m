@@ -197,25 +197,13 @@
 }
 
 - (void)setupAppearance {
-    // v1.3: on iOS 7+, skip the iOS-6 skeuomorphic UIAppearance overrides and
-    // let the system flat defaults apply (white translucent bars, no text
-    // shadows, system tint). Keeping the gradient PNGs + text shadows on
-    // iOS 7+ makes the app look out of place. iOS 6 still gets the full
-    // skeuomorphic treatment below.
-    if ([IOS6Theme useFlatStyle]) {
-        // Optional: set a tintColor so blue accents stay consistent with iOS 6.
-        id navProxy7 = [UINavigationBar appearance];
-        if ([navProxy7 respondsToSelector:@selector(setTintColor:)]) {
-            [navProxy7 setTintColor:[IOS6Theme primaryBlue]];
-        }
-        id tabProxy7 = [UITabBar appearance];
-        if ([tabProxy7 respondsToSelector:@selector(setTintColor:)]) {
-            [tabProxy7 setTintColor:[IOS6Theme primaryBlue]];
-        }
-        return;
-    }
+    // v1.3.2.1: removed the iOS-7+ flat early-return that was added in v1.3.
+    // User explicitly asked for the iOS 6 skeuomorphic look on every iOS
+    // version (gradient blue nav bar, dark metal tab bar, white shadowed
+    // titles), so we always apply the UIAppearance overrides below. iOS 7+
+    // honors most of these (background image, tint, title text attributes)
+    // even though it's not the "native" look — that's the whole point.
     // UIAppearance proxy (iOS 5+) — apply once for all nav/tab bars + buttons.
-    // This guarantees consistent iOS 6 chrome across every screen without per-VC setup.
     id navProxy = [UINavigationBar appearance];
     if ([navProxy respondsToSelector:@selector(setBackgroundImage:forBarMetrics:)]) {
         UIImage *navBg = [IOS6Theme navBarBackground];
