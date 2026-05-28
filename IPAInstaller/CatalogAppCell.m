@@ -15,7 +15,9 @@
         // App icon — 44×44 thumbnail, left edge.
         self.appIconView = [[UIImageView alloc] init];
         self.appIconView.contentMode = UIViewContentModeScaleAspectFit;
-        self.appIconView.backgroundColor = [UIColor colorWithWhite:0.93 alpha:1.0];
+        // v1.3.2.1: clear (not gray) — pre-rounded icons have transparent
+        // corners; a gray placeholder showed as a square behind the rounding.
+        self.appIconView.backgroundColor = [UIColor clearColor];
         [self.contentView addSubview:self.appIconView];
 
         // Title — bold, single line.

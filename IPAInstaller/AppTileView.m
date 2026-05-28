@@ -107,7 +107,11 @@ static UIImage *_sharedCheckOff = nil;
 
         self.iconView = [[UIImageView alloc] init];
         self.iconView.contentMode = UIViewContentModeScaleAspectFit;
-        self.iconView.backgroundColor = [UIColor colorWithWhite:0.93 alpha:1.0];
+        // v1.3.2.1: clear (not gray). IconLoader bakes rounded corners into the
+        // icon bitmap with transparent corners; a gray placeholder bg showed
+        // through those corners as an ugly gray square outside the rounding.
+        // Clear lets the tile background show through the rounded corners.
+        self.iconView.backgroundColor = [UIColor clearColor];
         [self addSubview:self.iconView];
 
         self.titleLabel = [[UILabel alloc] init];

@@ -96,7 +96,9 @@
 
     self.iconView = [[UIImageView alloc] initWithFrame:CGRectMake(15, 15, 90, 90)];
     self.iconView.contentMode = UIViewContentModeScaleAspectFit;
-    self.iconView.backgroundColor = [UIColor colorWithWhite:0.92 alpha:1.0];
+    // v1.3.2.1: clear (not gray) — pre-rounded icon corners are transparent;
+    // the gray placeholder bg showed as a square contour around the rounding.
+    self.iconView.backgroundColor = [UIColor clearColor];
     // No layer.cornerRadius / borderWidth (offscreen render = slow on iPad A4/A6X)
     [header addSubview:self.iconView];
 
