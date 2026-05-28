@@ -96,19 +96,27 @@
     self.tableView.opaque = YES;
     [self.view addSubview:self.tableView];
 
-    // Input bar — brushed metal style with subtle gradient (gray button image stretched as bg)
+    // Input bar — brushed metal style with subtle gradient (gray button image stretched as bg).
+    // v1.3.2: on iOS 7+, IOS6Theme returns nil for the gradient PNG and we use
+    // a flat light-gray fill + lighter hairline instead — matches the flat
+    // language of iOS 7+ Messages.
     self.inputBar = [[UIView alloc] initWithFrame:CGRectMake(0, b.size.height - inputH, w, inputH)];
     self.inputBar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     self.inputBar.opaque = YES;
-    // Use a UIImageView with stretchable tabBarBackground-ish gradient inverted (light to slightly darker)
+    self.inputBar.backgroundColor = [IOS6Theme useFlatStyle]
+        ? [UIColor colorWithWhite:0.97 alpha:1.0]  // iOS 7+ flat near-white
+        : [UIColor colorWithWhite:0.85 alpha:1.0]; // iOS 6 visible under the gradient PNG
     UIImageView *barBg = [[UIImageView alloc] initWithFrame:self.inputBar.bounds];
-    barBg.image = [IOS6Theme grayButtonNormal];  // light metallic gradient
+    barBg.image = [IOS6Theme grayButtonNormal];  // nil on iOS 7+, gradient PNG on iOS 6
     barBg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     barBg.contentMode = UIViewContentModeScaleToFill;
     [self.inputBar addSubview:barBg];
-    // Top hairline (dark line above input bar)
+    // Top hairline. Dark on iOS 6 to match the metallic bar, light on iOS 7+
+    // where the bar is near-white and a dark line would look out of place.
     UIView *topBorder = [[UIView alloc] initWithFrame:CGRectMake(0, 0, w, 0.5)];
-    topBorder.backgroundColor = [UIColor colorWithWhite:0.40 alpha:1.0];
+    topBorder.backgroundColor = [IOS6Theme useFlatStyle]
+        ? [UIColor colorWithWhite:0.78 alpha:1.0]
+        : [UIColor colorWithWhite:0.40 alpha:1.0];
     topBorder.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     [self.inputBar addSubview:topBorder];
     [self.view addSubview:self.inputBar];
@@ -567,11 +575,23 @@
     card.userInteractionEnabled = YES;
     card.opaque = NO;  // pixels outside the rounded card are transparent
 
-    // Stretchable card background PNG (white gradient + border + 12pt rounded corners baked)
-    UIImageView *bg = [[UIImageView alloc] initWithFrame:card.bounds];
-    bg.image = [IOS6Theme cardBackground];
-    bg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    [card addSubview:bg];
+    // Stretchable card background PNG (white gradient + border + 12pt rounded corners baked).
+    // v1.3.2: nil on iOS 7+ — emulate the flat equivalent with CALayer corner
+    // radius + hairline border on the card itself. Doing it on `card` (not on
+    // bg) lets the icon/labels still draw on top without needing the bg view.
+    UIImage *cardBg = [IOS6Theme cardBackground];
+    if (cardBg) {
+        UIImageView *bg = [[UIImageView alloc] initWithFrame:card.bounds];
+        bg.image = cardBg;
+        bg.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+        [card addSubview:bg];
+    } else {
+        card.backgroundColor = [UIColor whiteColor];
+        card.layer.cornerRadius = 6.0;
+        card.layer.borderWidth = 0.5;
+        card.layer.borderColor = [UIColor colorWithWhite:0.82 alpha:1.0].CGColor;
+        card.layer.masksToBounds = YES;
+    }
 
     CGFloat iconSize = 52;
     CGFloat pad = 10;
