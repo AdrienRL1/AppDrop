@@ -15,4 +15,9 @@
 @property (nonatomic, copy) BOOL (^isAppSelectedBlock)(NSDictionary *app);
 
 - (void)setApps:(NSArray *)apps;
+
+// Shared grid density: how many tiles fit across `w` points. iPhone always 1.
+// On iPad it reads the "IPAInstall.GridDensity" pref (0…1, set by the Settings
+// slider) so Catalogue and Recherche stay in sync. Default ≈ 175 pt tiles.
++ (NSInteger)tilesPerRowForWidth:(CGFloat)w;
 @end

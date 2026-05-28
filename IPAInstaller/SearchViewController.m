@@ -6,11 +6,15 @@
 #import "AppDetailViewController.h"
 #import "IconLoader.h"
 #import "IOS6Theme.h"
+#import "AppRowCell.h"
+#import "FilterViewController.h"
+
+static inline BOOL kSearchIsIPad(void) { return UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad; }
 
 static const CGFloat kIconSize = 44;
 static const NSInteger kPageLimit = 50;
 
-@interface SearchViewController ()
+@interface SearchViewController () <FilterViewControllerDelegate>
 @property (nonatomic, strong) UISearchBar *searchBar;
 @property (nonatomic, strong) UITableView *tableView;
 @property (nonatomic, strong) UILabel *statusLabel;
@@ -33,6 +37,10 @@ static const NSInteger kPageLimit = 50;
     self.view.backgroundColor = [IOS6Theme contentBackgroundColor];
     self.results = [NSMutableArray array];
     self.currentQuery = @"";
+    // v1.4: re-lay-out the grid when the Settings density slider changes.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+        selector:@selector(gridDensityDidChange)
+            name:@"AppDropGridDensityChanged" object:nil];
 
     CGFloat w = self.view.bounds.size.width;
     self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, w, 44)];
@@ -48,7 +56,7 @@ static const NSInteger kPageLimit = 50;
     self.tableView.delegate = self;
     self.tableView.tableHeaderView = self.searchBar;
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-    self.tableView.rowHeight = 76;
+    self.tableView.rowHeight = kSearchIsIPad() ? 170 : 76;  // iPad: tile-grid rows like the Catalogue
     self.tableView.backgroundColor = [IOS6Theme contentBackgroundColor];
     [self.view addSubview:self.tableView];
 
@@ -58,6 +66,12 @@ static const NSInteger kPageLimit = 50;
     self.statusLabel.font = [UIFont systemFontOfSize:12];
     self.statusLabel.text = T(@"search.hint_empty");
     self.tableView.tableFooterView = self.statusLabel;
+
+    // Filters — same screen as the Catalogue, applied to the search results.
+    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc]
+        initWithTitle:T(@"catalog.filters")
+                style:UIBarButtonItemStyleBordered
+               target:self action:@selector(filtersTapped)];
 }
 
 // Pop the keyboard as soon as the user lands on this tab — search-first UX.
@@ -167,7 +181,9 @@ static const NSInteger kPageLimit = 50;
 #pragma mark - UITableView
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)s {
-    return self.results.count;
+    if (!kSearchIsIPad()) return self.results.count;
+    NSInteger n = [AppRowCell tilesPerRowForWidth:tv.bounds.size.width];
+    return (NSInteger)(self.results.count + n - 1) / n;  // ceil — tiles packed per row
 }
 
 - (NSString *)humanSize:(long long)bytes {
@@ -178,6 +194,33 @@ static const NSInteger kPageLimit = 50;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tv cellForRowAtIndexPath:(NSIndexPath *)ip {
+    // ===== iPad: multi-tile grid row (same component as the Catalogue) =====
+    if (kSearchIsIPad()) {
+        static NSString *rowId = @"searchRow";
+        AppRowCell *row = [tv dequeueReusableCellWithIdentifier:rowId];
+        if (!row) row = [[AppRowCell alloc] initWithStyle:UITableViewCellStyleDefault
+                                          reuseIdentifier:rowId];
+        NSInteger n = [AppRowCell tilesPerRowForWidth:tv.bounds.size.width];
+        row.tilesPerRow = n;
+        row.selectionMode = NO;
+        __weak typeof(self) ws = self;
+        row.onTileTap = ^(NSDictionary *app) {
+            if ([ws.searchBar isFirstResponder]) [ws.searchBar resignFirstResponder];
+            AppDetailViewController *vc = [[AppDetailViewController alloc] initWithApp:app];
+            [ws.navigationController pushViewController:vc animated:YES];
+        };
+        NSInteger startIdx = ip.row * n;
+        NSMutableArray *slice = [NSMutableArray array];
+        for (NSInteger i = startIdx; i < startIdx + n && i < (NSInteger)self.results.count; i++) {
+            [slice addObject:self.results[i]];
+        }
+        [row setApps:slice];
+        NSInteger totalRows = (NSInteger)(self.results.count + n - 1) / n;
+        if (ip.row >= totalRows - 2) [self loadMore];   // prefetch next page near the end
+        return row;
+    }
+
+    // ===== iPhone: single-app list row =====
     static NSString *cellId = @"searchCell";
     CatalogAppCell *cell = [tv dequeueReusableCellWithIdentifier:cellId];
     if (!cell) {
@@ -223,6 +266,7 @@ static const NSInteger kPageLimit = 50;
 }
 
 - (void)tableView:(UITableView *)tv didSelectRowAtIndexPath:(NSIndexPath *)ip {
+    if (kSearchIsIPad()) return;   // iPad taps are handled by AppRowCell tiles (onTileTap)
     [tv deselectRowAtIndexPath:ip animated:YES];
     if ([self.searchBar isFirstResponder]) [self.searchBar resignFirstResponder];
     if (ip.row >= (NSInteger)self.results.count) return;
@@ -242,6 +286,35 @@ static const NSInteger kPageLimit = 50;
 
 - (void)scrollViewDidEndDecelerating:(UIScrollView *)sv {
     [[IconLoader shared] resume];
+}
+
+#pragma mark - Filters
+
+- (void)filtersTapped {
+    FilterViewController *fvc = [[FilterViewController alloc] init];
+    fvc.filter = [CatalogFilter load_];
+    fvc.delegate = self;
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:fvc];
+    [self presentViewController:nav animated:YES completion:nil];
+}
+
+- (void)filterViewController:(FilterViewController *)vc didSaveFilter:(CatalogFilter *)filter {
+    // FilterViewController already persisted it; re-run the current query so the new
+    // min/max iOS, device class, unique & sort apply to the search results.
+    [self dismissViewControllerAnimated:YES completion:nil];
+    if (self.currentQuery.length) [self runQuery];
+}
+
+- (void)filterViewControllerDidCancel:(FilterViewController *)vc {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)gridDensityDidChange {
+    [self.tableView reloadData];   // new column count from the density pref
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)o { return YES; }

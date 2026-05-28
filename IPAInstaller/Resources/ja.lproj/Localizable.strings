@@ -63,6 +63,11 @@
 "settings.about_min_ios" = "アプリの最小 iOS";
 "settings.about_device_ios" = "デバイスの iOS";
 "settings.about_device_model" = "デバイスのモデル";
+"settings.section_display" = "表示";
+"settings.grid_density" = "1行あたりのアプリ数";
+"settings.section_display_footer" = "カタログと検索で1行あたりに表示するアプリ数を増減します。";
+"settings.about_chip" = "チップ";
+"settings.about_ram" = "メモリ (RAM)";
 "settings.language" = "言語";
 "settings.language_auto" = "自動 (システム)";
 
@@ -75,6 +80,10 @@
 "filter.sort_label" = "並び順: %@";
 
 "chat.found_apps" = "%lu 個のアプリが見つかりました。";
+"chat.not_found" = "そのアプリはカタログ内で見つかりませんでした。";
+"chat.found_named" = "見つかったのはこちらです：%@。";
+"chat.device_answer" = "あなたのデバイス：%@。";
+"chat.search_results_neutral" = "一致する可能性のあるカタログの結果です：";
 
 "chat.llm_error" = "AI サービスが利用できません。ネットワークを確認して再試行してください。";
 

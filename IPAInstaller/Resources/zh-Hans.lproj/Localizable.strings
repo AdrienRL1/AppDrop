@@ -63,6 +63,11 @@
 "settings.about_min_ios" = "应用最低 iOS";
 "settings.about_device_ios" = "设备 iOS";
 "settings.about_device_model" = "设备型号";
+"settings.section_display" = "显示";
+"settings.grid_density" = "每行应用数";
+"settings.section_display_footer" = "滑动以增减目录和搜索中每行显示的应用数量。";
+"settings.about_chip" = "芯片";
+"settings.about_ram" = "内存 (RAM)";
 "settings.language" = "语言";
 "settings.language_auto" = "自动 (系统)";
 
@@ -75,6 +80,10 @@
 "filter.sort_label" = "排序: %@";
 
 "chat.found_apps" = "找到 %lu 个匹配的应用。";
+"chat.not_found" = "我在目录中没有找到该应用。";
+"chat.found_named" = "我找到了：%@。";
+"chat.device_answer" = "你的设备：%@。";
+"chat.search_results_neutral" = "以下是目录中可能匹配的结果：";
 
 "chat.llm_error" = "AI 服务不可用。请检查网络后重试。";
 

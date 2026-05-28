@@ -10,6 +10,7 @@
 #import "Localization.h"
 #import "PollinationsLLM.h"
 #import <objc/runtime.h>
+#import "DeviceInfo.h"   // exact device model + chip + RAM for the AI
 
 @interface ChatViewController ()
 @property (nonatomic, strong) NSMutableArray *messages;           // ChatMessage instances
@@ -32,49 +33,12 @@
     self.view.backgroundColor = [IOS6Theme chatBackgroundColor];
     self.messages = [NSMutableArray array];
 
-    // System prompt: tells LLM about its role and how to use tools.
-    NSString *systemPrompt =
-        @"You are an assistant who finds old iOS apps in the IPA Archive catalog (157000 apps, 2008-2014).\n\n"
-        @"USER LANGUAGE: French. The user types in French. The catalog data is in ENGLISH (titles, bundle IDs).\n"
-        @"Your final text response must be in French. But all your search_catalog queries MUST be in English.\n\n"
-        @"=== MANDATORY WORKFLOW ===\n"
-        @"For EVERY user request asking for an app:\n"
-        @"1. Translate the French intent into 3 to 5 short English keywords (1-2 words each).\n"
-        @"2. Call search_catalog ONCE PER KEYWORD (3 to 5 tool calls minimum). Do them in sequence.\n"
-        @"3. Only AFTER all those searches, write your final French response.\n"
-        @"4. NEVER conclude 'no app found' after fewer than 3 searches with different keywords.\n\n"
-        @"=== TRANSLATION CHEAT SHEET ===\n"
-        @"  visage / face → face, morph, warp, deform, fat, aging, booth, goo, swap\n"
-        @"  photo manipulation → photo, image, edit, filter, lab\n"
-        @"  jeu de course → racing, race, driving, drift, car\n"
-        @"  jeu de tir → shooter, gun, sniper, war\n"
-        @"  jeu de plateforme → platformer, jump, runner\n"
-        @"  puzzle / casse-tete → puzzle, brain, sudoku, match\n"
-        @"  musique → music, piano, guitar, sound, beat\n"
-        @"  cuisine / recettes → recipe, cooking, food, chef\n"
-        @"  meditation / sommeil → sleep, meditation, calm, relax\n"
-        @"  apprendre les langues → learn, english, spanish, vocabulary\n"
-        @"  productivité → notes, task, todo, calendar\n"
-        @"  dessin / peinture → draw, paint, sketch, color\n"
-        @"  fitness / sport → workout, fitness, run, gym\n"
-        @"  bebe / enfant → kids, baby, child, learn\n\n"
-        @"=== EXAMPLE ===\n"
-        @"User: 'trouve une app qui deforme les visages depuis une photo'\n"
-        @"You: call search_catalog(query='face') → 10 results\n"
-        @"     call search_catalog(query='morph') → 5 results\n"
-        @"     call search_catalog(query='warp') → 3 results\n"
-        @"     call search_catalog(query='booth') → 6 results\n"
-        @"     call search_catalog(query='deform') → 2 results\n"
-        @"     final French response: 'Voici plusieurs apps de morphing facial trouvees dans le catalogue. "
-        @"     Les premieres sont les plus connues comme FaceGoo et Photo Deformer.'\n"
-        @"(The code automatically displays found apps as tappable cards below your text — do NOT list them in text.)\n\n"
-        @"=== RULES ===\n"
-        @"  R1: NEVER pass French words to search_catalog. Always translate first.\n"
-        @"  R2: Try AT LEAST 3 different English keywords per user request.\n"
-        @"  R3: If search returns 0 and has a _hint field, FOLLOW the hint and retry.\n"
-        @"  R4: Final French response: 2-4 sentences, no lists, no numbering. Just a fluid description.\n"
-        @"  R5: If after 5 different keyword attempts you genuinely found nothing, say so politely.";
-    [self.messages addObject:[ChatMessage system:systemPrompt]];
+    // NOTE (v1.4): the chat does NOT drive the model with a conversation-style system
+    // prompt. The real model work lives in PollinationsLLM as two focused calls — query
+    // expansion, then a GROUNDED selection pass over the real apps we found. We keep a
+    // tiny placeholder system message only so the transcript array has a stable shape;
+    // it is never sent to the model nor shown in the UI.
+    [self.messages addObject:[ChatMessage system:@"AppDrop vintage-iOS app finder."]];
 
     self.cachedRowViews = [NSMutableArray array];
     [self buildUI];
@@ -212,6 +176,13 @@
 //   3) If catalog returns < 3 hits → call LLM again with "alternative titles" prompt,
 //      excluding the titles we already tried. Search again, merge results.
 - (void)runHeuristicSearchForText:(NSString *)text {
+    // v1.4: pure device questions are answered instantly & locally (no network).
+    if ([self isDeviceQuestion:text]) {
+        NSString *r = [NSString stringWithFormat:T(@"chat.device_answer"), [DeviceInfo aiSummary]];
+        [self finishChatWithApps:@[] reply:r];
+        return;
+    }
+
     self.waiting = YES;
     self.sendBtn.enabled = NO;
     [self.spinner startAnimating];
@@ -290,7 +261,56 @@
         NSMutableArray *out = [NSMutableArray array];
         for (NSString *bid in bids) {
             [out addObject:appsByBid[bid]];
-            if (out.count >= 12) break;
+            if (out.count >= 20) break;  // v1.4: bigger pool for the grounding pass
+        }
+
+        // v1.4 FAST PATH (1 LLM call total): if the catalog holds an app whose title
+        // EXACTLY matches one of the model's specific guesses, that's a high-confidence
+        // real hit — skip the grounding round-trip and answer now with a locally-built,
+        // fully-grounded reply (names come straight from real catalog apps). This halves
+        // latency for the common "famous / well-described app" case.
+        NSMutableArray *guesses = [NSMutableArray array];
+        for (NSString *t in titles) {
+            NSString *n = NormalizeTitle(t);
+            if (n.length) [guesses addObject:n];
+        }
+        NSMutableArray *confident = [NSMutableArray array];
+        NSMutableSet *seenTitles = [NSMutableSet set];   // one card per distinct title
+        for (NSDictionary *app in out) {
+            NSString *c = NormalizeTitle(app[@"title"]);
+            if (!c.length || [seenTitles containsObject:c]) continue;  // skip dup titles
+            BOOL hit = NO;
+            for (NSString *g in guesses) {
+                if ([c isEqualToString:g]) { hit = YES; break; }   // exact title match
+                // Fuzzy: one title contains the other, but only for guesses long
+                // enough to be unambiguous (avoids "face" matching "Facebook").
+                if (g.length >= 5 &&
+                    ([c rangeOfString:g].location != NSNotFound ||
+                     (c.length >= 5 && [g rangeOfString:c].location != NSNotFound))) {
+                    hit = YES; break;
+                }
+            }
+            if (hit) {
+                [seenTitles addObject:c];
+                [confident addObject:app];
+                if (confident.count >= 6) break;
+            }
+        }
+        // Any query that references the device ("...sur mon iPad", "does X run on my
+        // iPad?") skips the local fast path so the LLM can give a device-aware answer
+        // (it has the model/chip/RAM/iOS context in its system prompt).
+        if (confident.count > 0 && ![self mentionsDevice:userText]) {
+            NSMutableArray *names = [NSMutableArray array];
+            for (NSDictionary *app in confident) {
+                NSString *t = [app[@"title"] isKindOfClass:[NSString class]] ? app[@"title"] : nil;
+                if (t.length) [names addObject:t];
+            }
+            NSString *localReply = [NSString stringWithFormat:T(@"chat.found_named"),
+                                     [names componentsJoinedByString:@", "]];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self finishChatWithApps:confident reply:localReply];
+            });
+            return;
         }
 
         // Few hits? Retry with alternative titles from the LLM.
@@ -308,7 +328,9 @@
         }
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            [self finishChatWithApps:out reply:reply];
+            // v1.4: don't answer from the LLM's memory reply — ground it in the real
+            // apps we just found and let the model pick only among those.
+            [self groundCandidates:out userText:userText];
         });
     });
 }
@@ -326,9 +348,9 @@
                                              completion:^(NSArray *titles2, NSArray *kws2,
                                                             NSString *reply2, NSError *err) {
         if (err || (!titles2.count && !kws2.count)) {
-            // Retry itself failed — fall back to whatever the first pass turned up,
-            // even if it's slim. Better than an error message.
-            [self finishChatWithApps:firstPassResults reply:reply];
+            // Retry itself failed — ground whatever the first pass turned up (even if
+            // slim) so we still don't invent. Better than a memory-only reply.
+            [self groundCandidates:firstPassResults userText:userText];
             return;
         }
         // Merge first-pass + alternative-pass results.
@@ -382,14 +404,156 @@
             NSMutableArray *out = [NSMutableArray array];
             for (NSString *bid in bids) {
                 [out addObject:appsByBid[bid]];
-                if (out.count >= 12) break;
+                if (out.count >= 20) break;  // v1.4: bigger pool for the grounding pass
             }
-            // Prefer the SECOND reply because it reflects the LLM's revised guess.
-            NSString *finalReply = reply2.length ? reply2 : reply;
             dispatch_async(dispatch_get_main_queue(), ^{
-                [self finishChatWithApps:out reply:finalReply];
+                // v1.4: ground the merged candidates instead of using a memory reply.
+                [self groundCandidates:out userText:userText];
             });
         });
+    }];
+}
+
+// Normalise a title for confident exact-match comparison: lowercase, keep only
+// alphanumerics (so "Cut the Rope!" == "cut the rope" == "CutTheRope").
+static NSString *NormalizeTitle(NSString *s) {
+    if (![s isKindOfClass:[NSString class]]) return @"";
+    NSString *lower = [s lowercaseString];
+    NSMutableString *out = [NSMutableString string];
+    for (NSUInteger i = 0; i < lower.length; i++) {
+        unichar c = [lower characterAtIndex:i];
+        if ((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')) [out appendFormat:@"%C", c];
+    }
+    return out;
+}
+
+// Real hardware + OS so the AI can suggest apps that run on THIS device. hw.machine
+// is the exact model id (e.g. "iPad4,4" = iPad mini 2) which the model recognises;
+// we add the idiom + the exact iOS version.
+// "What's my iPad? / how much RAM? / which iOS?" — a pure question about the device
+// itself (NOT an app search). Answered instantly & locally, no network.
+- (BOOL)isDeviceQuestion:(NSString *)text {
+    NSString *t = [text lowercaseString];
+    if (!t.length) return NO;
+    NSArray *appWords = @[@"app", @"appli", @"jeu", @"game", @"trouve", @"cherche",
+                          @"recommand", @"suggèr", @"suggere", @"installe", @"télécharge",
+                          @"telecharge", @"download", @"looking for", @"find me"];
+    for (NSString *w in appWords) if ([t rangeOfString:w].location != NSNotFound) return NO;
+    NSArray *devWords = @[@"mon ipad", @"mon iphone", @"mon ipod", @"mon appareil",
+                          @"ma tablette", @"mon modèle", @"mon modele", @"cet appareil",
+                          @"ce modèle", @"my ipad", @"my iphone", @"my ipod", @"my device",
+                          @"my model", @"this device"];
+    BOOL refsDevice = NO;
+    for (NSString *w in devWords) if ([t rangeOfString:w].location != NSNotFound) { refsDevice = YES; break; }
+    if (!refsDevice) return NO;
+    NSArray *qWords = @[@"quel", @"quelle", @"quoi", @"combien", @"what", @"which",
+                        @"how much", @"how many", @"ram", @"mémoire", @"memoire", @"memory",
+                        @"processeur", @"processor", @"puce", @"chip", @"cpu", @"spec",
+                        @"modèle", @"modele", @"model", @"version", @"?"];
+    for (NSString *w in qWords) if ([t rangeOfString:w].location != NSNotFound) return YES;
+    return NO;
+}
+
+// "Does this app run / is it compatible with my iPad?" — route to the LLM (grounding)
+// so it can give a device-aware answer, instead of the local 1-call fast path.
+- (BOOL)isCompatQuestion:(NSString *)text {
+    NSString *t = [text lowercaseString];
+    if (!t.length) return NO;
+    NSArray *devWords = @[@"mon ipad", @"mon iphone", @"mon ipod", @"mon appareil",
+                          @"ma tablette", @"sur mon", @"my ipad", @"my iphone", @"my device", @"on my"];
+    BOOL refsDevice = NO;
+    for (NSString *w in devWords) if ([t rangeOfString:w].location != NSNotFound) { refsDevice = YES; break; }
+    if (!refsDevice) return NO;
+    NSArray *compatWords = @[@"compatib", @"tourne", @"marche", @"fonctionne", @"supporte",
+                             @"run", @"work", @"capable"];
+    for (NSString *w in compatWords) if ([t rangeOfString:w].location != NSNotFound) return YES;
+    return NO;
+}
+
+// Does the user reference their device at all? ("...sur mon iPad", "pour mon appareil"…)
+// If so we route to the LLM (grounding) instead of the local fast path, so the reply
+// can actually be tailored to / mention the device.
+- (BOOL)mentionsDevice:(NSString *)text {
+    NSString *t = [text lowercaseString];
+    NSArray *devWords = @[@"mon ipad", @"mon iphone", @"mon ipod", @"mon appareil",
+                          @"ma tablette", @"sur mon", @"pour mon", @"mon modèle", @"mon modele",
+                          @"my ipad", @"my iphone", @"my ipod", @"my device", @"on my", @"for my"];
+    for (NSString *w in devWords) if ([t rangeOfString:w].location != NSNotFound) return YES;
+    return NO;
+}
+
+// Decode the catalog `platform` bitmask into a human device string for the model.
+// Matches AppDetailViewController: bit 2 = iPhone, 4 = iPad, 8 = AppleTV, 16 = Watch.
+// "iPhone/iPad" means universal.
+- (NSString *)deviceStringForMask:(NSInteger)mask {
+    NSMutableArray *p = [NSMutableArray array];
+    if (mask & 2)  [p addObject:@"iPhone"];
+    if (mask & 4)  [p addObject:@"iPad"];
+    if (mask & 8)  [p addObject:@"AppleTV"];
+    if (mask & 16) [p addObject:@"Watch"];
+    return p.count ? [p componentsJoinedByString:@"/"] : @"?";
+}
+
+// v1.4 GROUNDING — the anti-hallucination step. We have REAL catalog candidates;
+// hand the model a numbered list and let it pick only the ones that truly match +
+// write a reply about just those. The model answers by number, so it cannot invent
+// an app outside the list. No match (or a failed call) → honest empty state.
+- (void)groundCandidates:(NSArray *)candidates userText:(NSString *)userText {
+    if (candidates.count == 0) {
+        [self finishChatWithApps:@[] reply:T(@"chat.not_found")];
+        return;
+    }
+    NSMutableArray *lines = [NSMutableArray array];
+    for (NSUInteger i = 0; i < candidates.count; i++) {
+        NSDictionary *app = candidates[i];
+        NSString *title = [app[@"title"]   isKindOfClass:[NSString class]] ? app[@"title"]   : @"?";
+        NSString *ver   = [app[@"version"] isKindOfClass:[NSString class]] ? app[@"version"] : @"?";
+        NSString *minOS = [app[@"minOS"]   isKindOfClass:[NSString class]] ? app[@"minOS"]   : @"?";
+        NSString *devices = [self deviceStringForMask:[app[@"platform"] integerValue]];
+        long long bytes = [app[@"size"] longLongValue];
+        NSString *sizeStr = bytes > 0
+            ? [NSString stringWithFormat:@"%.1f MB", bytes / (1024.0 * 1024.0)] : @"?";
+        // Rich line so the model knows each app's device compatibility, min iOS and
+        // size — it can mention these and prioritise by them when the user cares.
+        [lines addObject:[NSString stringWithFormat:@"%lu. %@ — v%@ — %@ — iOS %@+ — %@",
+                          (unsigned long)(i + 1), title, ver, devices, minOS, sizeStr]];
+    }
+    [[PollinationsLLM shared] selectMatchingCandidates:lines
+                                              userText:userText
+                                            completion:^(NSArray *matchNumbers, NSString *reply,
+                                                          BOOL found, NSError *err) {
+        if (err) {
+            // Grounding call failed: show the top few real candidates with a NEUTRAL
+            // reply that does NOT claim they match — they're just raw search results.
+            NSArray *top = candidates.count > 6
+                ? [candidates subarrayWithRange:NSMakeRange(0, 6)] : candidates;
+            [self finishChatWithApps:top reply:T(@"chat.search_results_neutral")];
+            return;
+        }
+        if (!found || matchNumbers.count == 0) {
+            [self finishChatWithApps:@[] reply:(reply.length ? reply : T(@"chat.not_found"))];
+            return;
+        }
+        // Map 1-based numbers back to real app dicts (validate range, dedupe, keep order).
+        NSMutableArray *selected = [NSMutableArray array];
+        NSMutableSet *seen = [NSMutableSet set];
+        for (NSNumber *n in matchNumbers) {
+            if (![n respondsToSelector:@selector(integerValue)]) continue;
+            NSInteger idx = n.integerValue - 1;
+            if (idx < 0 || idx >= (NSInteger)candidates.count) continue;
+            if ([seen containsObject:@(idx)]) continue;
+            [seen addObject:@(idx)];
+            [selected addObject:candidates[idx]];
+            if (selected.count >= 6) break;
+        }
+        if (selected.count == 0) {
+            [self finishChatWithApps:@[] reply:(reply.length ? reply : T(@"chat.not_found"))];
+            return;
+        }
+        [self finishChatWithApps:selected
+                           reply:(reply.length ? reply
+                                  : [NSString stringWithFormat:T(@"chat.found_apps"),
+                                     (unsigned long)selected.count])];
     }];
 }
 
@@ -416,6 +580,11 @@
 #pragma mark - Table
 
 - (void)reloadAndScroll {
+    // Rebuild the cached row views from scratch so they're always laid out with the
+    // CURRENT table width. A view cached before the table reached its final width kept
+    // a stale height that no longer matched its cell → overlapping/clipped cards and
+    // big empty gaps when a new message was appended.
+    [self.cachedRowViews removeAllObjects];
     [self.tableView reloadData];
     [self scrollToBottom];
 }
@@ -458,6 +627,10 @@
 #define kChatHMargin      14.0
 #define kChatAppCardH     72.0
 #define kChatAppCardGap   6.0
+// CRITICAL: the row-height calc and the actual bubble build MUST use the same max
+// width fraction, or the real bubble ends up taller than the reserved cell height
+// and overflows onto the next cell (clipped/overlapping bubbles).
+#define kChatBubbleMaxFrac 0.78
 
 - (CGFloat)bubbleHeightForText:(NSString *)text width:(CGFloat)maxW {
     if (!text.length) return 0;
@@ -470,7 +643,7 @@
 - (CGFloat)tableView:(UITableView *)tv heightForRowAtIndexPath:(NSIndexPath *)ip {
     ChatMessage *m = [self displayableMessageAtIndex:ip.row];
     if (!m) return 44;
-    CGFloat maxBubbleW = tv.bounds.size.width * 0.80;
+    CGFloat maxBubbleW = tv.bounds.size.width * kChatBubbleMaxFrac;
     CGFloat h = [self bubbleHeightForText:m.content ?: @"" width:maxBubbleW];
     // Add app cards below if attached
     NSInteger nApps = m.attachedApps.count;
@@ -487,6 +660,7 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:cid];
         cell.contentView.backgroundColor = [IOS6Theme chatBackgroundColor];
         cell.contentView.opaque = YES;
+        cell.contentView.clipsToBounds = YES;   // never let content spill onto neighbour cells
         cell.backgroundColor = [IOS6Theme chatBackgroundColor];
         cell.selectionStyle = UITableViewCellSelectionStyleNone;
     }
@@ -524,7 +698,7 @@
 // All subviews (bubble drawRect, card UIImageView × N, labels × N) are created here
 // and never touched again — just re-parented as cells scroll in/out.
 - (UIView *)buildContentViewForMessage:(ChatMessage *)m width:(CGFloat)w {
-    CGFloat maxBubbleW = w * 0.78;
+    CGFloat maxBubbleW = w * kChatBubbleMaxFrac;
     BOOL isUser = [m.role isEqualToString:@"user"];
     CGFloat bubbleH = [self bubbleHeightForText:m.content ?: @"" width:maxBubbleW];
     CGSize sz = [(m.content ?: @"") sizeWithFont:[IOS6Theme bodyFont]

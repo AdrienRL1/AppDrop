@@ -63,6 +63,11 @@
 "settings.about_min_ios" = "iOS mín. de la app";
 "settings.about_device_ios" = "iOS del dispositivo";
 "settings.about_device_model" = "Modelo del dispositivo";
+"settings.section_display" = "Visualización";
+"settings.grid_density" = "Apps por fila";
+"settings.section_display_footer" = "Desliza para mostrar más o menos apps por fila en el catálogo y la búsqueda.";
+"settings.about_chip" = "Chip";
+"settings.about_ram" = "Memoria (RAM)";
 "settings.language" = "Idioma";
 "settings.language_auto" = "Automático (sistema)";
 
@@ -75,6 +80,10 @@
 "filter.sort_label" = "orden: %@";
 
 "chat.found_apps" = "Encontré %lu apps que coinciden.";
+"chat.not_found" = "No encontré esa app en el catálogo.";
+"chat.found_named" = "Esto es lo que encontré: %@.";
+"chat.device_answer" = "Tu dispositivo: %@.";
+"chat.search_results_neutral" = "Aquí hay resultados del catálogo que podrían coincidir:";
 
 "chat.llm_error" = "Servicio IA no disponible. Comprueba tu red y vuelve a intentarlo.";
 

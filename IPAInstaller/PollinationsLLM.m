@@ -1,5 +1,6 @@
 #import "PollinationsLLM.h"
 #import "HTTPSClient.h"
+#import "DeviceInfo.h"
 
 static NSString *const kEndpoint = @"https://text.pollinations.ai/openai";
 
@@ -53,44 +54,98 @@ static NSString *const kSystemPromptBase =
     @" \"keywords\":[\"doodle\",\"jump\",\"bounce\"],\n"
     @" \"reply\":\"おそらく Doodle Jump（2009年、Lima Sky）のことだと思います — 落ちないように上に跳ね続けるアーケードゲームです。\"}\n";
 
-// Internal worker that performs ONE LLM round-trip with the given system + user.
-// All callbacks hop to main.
-static void callLLM(NSString *systemPrompt, NSString *userMsg, float temperature,
-                    void (^completion)(NSArray *titles, NSArray *keywords,
-                                        NSString *reply, NSError *err)) {
+// v1.4 GROUNDING prompt — used for the second pass, where the model is shown the
+// REAL apps we found in the catalog and must pick only from them. This is what
+// stops invention: the model answers by NUMBER, choosing from a fixed real list.
+static NSString *const kSelectPrompt =
+    @"You help a user find a specific vintage iOS app (2008-2014) in an app catalog.\n"
+    @"You receive the user's description and a NUMBERED LIST of apps that REALLY EXIST\n"
+    @"in the catalog. Pick ONLY the apps from that list that genuinely match.\n"
+    @"\n"
+    @"ABSOLUTE RULES:\n"
+    @"- You may ONLY choose apps from the numbered list. NEVER name or invent an app\n"
+    @"  that is not in the list.\n"
+    @"- Identify matches by their NUMBER.\n"
+    @"- Quality over quantity: pick the few that truly fit (max 6), best first.\n"
+    @"- If NONE of the listed apps match, return \"matches\":[] and \"found\":false.\n"
+    @"  Do NOT force a wrong pick — finding nothing is a correct, expected outcome.\n"
+    @"\n"
+    @"Each list entry is: \"N. Title — version — devices — minimum iOS — size\".\n"
+    @"You KNOW each app's device compatibility (iPhone/iPad), minimum iOS and size.\n"
+    @"You MAY mention these in your reply, and you SHOULD prioritise by them when the\n"
+    @"user cares — e.g. asks for an iPad app, a specific iOS version, or a small/light app.\n"
+    @"\n"
+    @"You are told the user's exact device (model, chip, RAM, iOS). PREFER apps that\n"
+    @"actually run on it: an iPad-only app won't run on an iPhone/iPod, and an app whose\n"
+    @"minimum iOS is higher than the device's iOS cannot be installed. If your best match\n"
+    @"isn't fully compatible, you may still mention it but say so clearly.\n"
+    @"If the user is ASKING about their device, or whether an app is compatible with /\n"
+    @"runs well on it, ANSWER that directly in the reply using the device info (consider\n"
+    @"the chip and RAM). Put the relevant app(s) in matches if any apply, otherwise [].\n"
+    @"\n"
+    @"Reply in the USER'S language.\n"
+    @"Output ONE JSON object — NO markdown, NO code fences, NO extra text:\n"
+    @"{\"matches\":[<app numbers, best first>], \"found\":true|false,\n"
+    @" \"reply\":\"<1-3 sentences in the user's language>\"}\n"
+    @"\n"
+    @"If found=true: the reply briefly names the matching app(s) and what they are.\n"
+    @"If found=false: politely say you did NOT find it in the catalog; do not point to\n"
+    @"external stores or apps outside the list.\n"
+    @"\n"
+    @"Example (match):\n"
+    @"User: \"jeu ou on coupe des cordes pour donner des bonbons\"\n"
+    @"List:\n1. Talking Tom Cat — v2.0 — iPhone — iOS 4.0+ — 18.0 MB\n2. Cut the Rope — v1.0 — iPhone/iPad — iOS 4.0+ — 12.3 MB\n3. Fruit Ninja — v1.8 — iPhone — iOS 3.0+ — 20.1 MB\n"
+    @"{\"matches\":[2],\"found\":true,\"reply\":\"Oui, c'est Cut the Rope (#2), le jeu ou tu coupes des cordes pour donner des bonbons a Om Nom. Compatible iPhone/iPad, iOS 4.0+, 12 Mo.\"}\n"
+    @"\n"
+    @"Example (no match):\n"
+    @"User: \"une app de montage video 4K avec IA\"\n"
+    @"List:\n1. Doodle Jump (v1.8, iOS 4.0)\n2. Angry Birds (v2.0, iOS 4.0)\n"
+    @"{\"matches\":[],\"found\":false,\"reply\":\"Je n'ai pas trouve cette app dans le catalogue — il ne contient que des apps de 2008-2014.\"}\n";
+
+// Core round-trip: POST system+user, strip code fences, extract the {...} JSON
+// object and return it PARSED. Callback hops to main. Reused by every LLM step
+// (query expansion, alternatives, and the v1.4 grounding pass) — each step then
+// reads whatever fields it needs out of the dictionary.
+static void callLLMRaw(NSString *systemPrompt, NSString *userMsg, float temperature,
+                       void (^completion)(NSDictionary *parsed, NSError *err)) {
+    void (^cb)(NSDictionary *, NSError *) = ^(NSDictionary *p, NSError *e) {
+        dispatch_async(dispatch_get_main_queue(), ^{ completion(p, e); });
+    };
+    // v1.4: EVERY LLM call is device-aware — append the exact hardware to the system
+    // prompt so the model can tailor suggestions and answer compatibility questions.
+    NSString *sysWithDevice = [systemPrompt stringByAppendingFormat:
+        @"\n\nCONTEXT — User's device: %@. When relevant, tailor your answer to this exact "
+        @"hardware (model, chip, RAM, iOS); you may answer questions about the device or "
+        @"whether an app is compatible with it.", [DeviceInfo aiSummary]];
     NSDictionary *payload = @{
-        @"model": @"openai",  // alias → openai-fast (GPT-OSS 20B)
+        @"model": @"openai-fast",  // GPT-OSS 20B (OVH) — the only free anon model; the
+                                   // direct "openai-fast" id routes faster than the "openai" alias
         @"messages": @[
-            @{@"role": @"system", @"content": systemPrompt},
+            @{@"role": @"system", @"content": sysWithDevice},
             @{@"role": @"user",   @"content": userMsg},
         ],
         @"private": @YES,
         @"temperature": @(temperature),
+        // Bound worst-case generation time. Generous enough for the model's hidden
+        // reasoning + our short JSON, but caps pathological runaways.
+        @"max_tokens": @1024,
     };
     NSError *je = nil;
     NSData *bodyData = [NSJSONSerialization dataWithJSONObject:payload options:0 error:&je];
-    if (je) {
-        dispatch_async(dispatch_get_main_queue(), ^{ completion(nil, nil, nil, je); });
-        return;
-    }
-
-    void (^cb)(NSArray *, NSArray *, NSString *, NSError *) =
-        ^(NSArray *t, NSArray *k, NSString *r, NSError *e) {
-        dispatch_async(dispatch_get_main_queue(), ^{ completion(t, k, r, e); });
-    };
+    if (je) { cb(nil, je); return; }
 
     [HTTPSClient postURL:kEndpoint
                   headers:@{@"Content-Type": @"application/json",
                             @"Accept": @"application/json"}
                      body:bodyData
-                  timeout:35
+                  timeout:60   // free endpoint cold-starts can take 20-50s; 35s was
+                               // killing slow-but-valid responses → "service unavailable"
                completion:^(NSData *resp, NSInteger code, NSError *err) {
         if (err || code != 200 || !resp.length) {
             NSLog(@"[Pollinations] error: code=%ld err=%@", (long)code, err);
-            cb(nil, nil, nil,
-                err ?: [NSError errorWithDomain:@"Pollinations" code:code
-                                       userInfo:@{NSLocalizedDescriptionKey:
-                                                  [NSString stringWithFormat:@"HTTP %ld", (long)code]}]);
+            cb(nil, err ?: [NSError errorWithDomain:@"Pollinations" code:code
+                                userInfo:@{NSLocalizedDescriptionKey:
+                                           [NSString stringWithFormat:@"HTTP %ld", (long)code]}]);
             return;
         }
         // OpenAI-compatible payload
@@ -107,9 +162,8 @@ static void callLLM(NSString *systemPrompt, NSString *userMsg, float temperature
             content = [[NSString alloc] initWithData:resp encoding:NSUTF8StringEncoding];
         }
         if (!content.length) {
-            cb(nil, nil, nil,
-                [NSError errorWithDomain:@"Pollinations" code:2
-                                userInfo:@{NSLocalizedDescriptionKey: @"Empty content"}]);
+            cb(nil, [NSError errorWithDomain:@"Pollinations" code:2
+                          userInfo:@{NSLocalizedDescriptionKey: @"Empty content"}]);
             return;
         }
         // Strip ``` code fences if present
@@ -132,9 +186,8 @@ static void callLLM(NSString *systemPrompt, NSString *userMsg, float temperature
         if (jsonStart.location == NSNotFound || jsonEnd.location == NSNotFound
             || jsonEnd.location <= jsonStart.location) {
             NSLog(@"[Pollinations] no JSON in: %@", content);
-            cb(nil, nil, nil,
-                [NSError errorWithDomain:@"Pollinations" code:3
-                                userInfo:@{NSLocalizedDescriptionKey: @"No JSON in response"}]);
+            cb(nil, [NSError errorWithDomain:@"Pollinations" code:3
+                          userInfo:@{NSLocalizedDescriptionKey: @"No JSON in response"}]);
             return;
         }
         NSString *jsonStr = [clean substringWithRange:NSMakeRange(jsonStart.location,
@@ -143,23 +196,30 @@ static void callLLM(NSString *systemPrompt, NSString *userMsg, float temperature
                                   [jsonStr dataUsingEncoding:NSUTF8StringEncoding]
                                                                 options:0 error:nil];
         if (![parsed isKindOfClass:[NSDictionary class]]) {
-            cb(nil, nil, nil,
-                [NSError errorWithDomain:@"Pollinations" code:4
-                                userInfo:@{NSLocalizedDescriptionKey:
-                                           [@"Bad JSON: " stringByAppendingString:jsonStr]}]);
+            cb(nil, [NSError errorWithDomain:@"Pollinations" code:4
+                          userInfo:@{NSLocalizedDescriptionKey:
+                                     [@"Bad JSON: " stringByAppendingString:jsonStr]}]);
             return;
         }
-        NSArray *titles   = parsed[@"titles"];
-        NSArray *keywords = parsed[@"keywords"];
-        NSString *reply   = parsed[@"reply"];
-        if (![titles isKindOfClass:[NSArray class]])    titles   = nil;
-        if (![keywords isKindOfClass:[NSArray class]])  keywords = nil;
-        if (![reply isKindOfClass:[NSString class]])    reply    = nil;
+        cb(parsed, nil);
+    }];
+}
+
+// Thin wrapper for the expansion/alternatives steps: pulls titles + keywords +
+// reply out of the raw dictionary.
+static void callLLM(NSString *systemPrompt, NSString *userMsg, float temperature,
+                    void (^completion)(NSArray *titles, NSArray *keywords,
+                                        NSString *reply, NSError *err)) {
+    callLLMRaw(systemPrompt, userMsg, temperature, ^(NSDictionary *parsed, NSError *err) {
+        if (err) { completion(nil, nil, nil, err); return; }
+        NSArray *titles   = [parsed[@"titles"]   isKindOfClass:[NSArray class]]  ? parsed[@"titles"]   : nil;
+        NSArray *keywords = [parsed[@"keywords"] isKindOfClass:[NSArray class]]  ? parsed[@"keywords"] : nil;
+        NSString *reply   = [parsed[@"reply"]    isKindOfClass:[NSString class]] ? parsed[@"reply"]    : nil;
         NSLog(@"[Pollinations] titles=%@ keywords=%@ reply='%@'",
               [titles componentsJoinedByString:@" | "],
               [keywords componentsJoinedByString:@","], reply);
-        cb(titles, keywords, reply, nil);
-    }];
+        completion(titles, keywords, reply, nil);
+    });
 }
 
 @implementation PollinationsLLM
@@ -201,6 +261,42 @@ static void callLLM(NSString *systemPrompt, NSString *userMsg, float temperature
         triedJoined];
     // Higher temperature on retry — first guess was wrong, push for variety.
     callLLM(altPrompt, userText, 0.9f, completion);
+}
+
+- (void)selectMatchingCandidates:(NSArray *)candidateLines
+                         userText:(NSString *)userText
+                       completion:(void (^)(NSArray *, NSString *, BOOL, NSError *))completion {
+    if (!candidateLines.count) {
+        if (completion) completion(@[], nil, NO, nil);
+        return;
+    }
+    NSMutableString *list = [NSMutableString string];
+    for (NSString *line in candidateLines) {
+        if ([line isKindOfClass:[NSString class]]) [list appendFormat:@"%@\n", line];
+    }
+    NSString *userMsg = [NSString stringWithFormat:
+        @"User description (any language): \"%@\"\n\n"
+        @"Catalog apps you may choose from (choose ONLY from these, refer by number):\n%@",
+        userText ?: @"", list];
+    // Low temperature: this is a precision task (pick real matches), not a creative one.
+    callLLMRaw(kSelectPrompt, userMsg, 0.3f, ^(NSDictionary *parsed, NSError *err) {
+        if (err) { if (completion) completion(nil, nil, NO, err); return; }
+        NSArray *rawMatches = [parsed[@"matches"] isKindOfClass:[NSArray class]] ? parsed[@"matches"] : @[];
+        NSString *reply = [parsed[@"reply"] isKindOfClass:[NSString class]] ? parsed[@"reply"] : nil;
+        // `found` may be a bool or be absent — infer from matches when missing.
+        BOOL found;
+        id f = parsed[@"found"];
+        if ([f isKindOfClass:[NSNumber class]]) found = [f boolValue];
+        else found = (rawMatches.count > 0);
+        // Normalize match entries to NSNumber (the model may emit ints or strings).
+        NSMutableArray *nums = [NSMutableArray array];
+        for (id x in rawMatches) {
+            if ([x respondsToSelector:@selector(integerValue)]) [nums addObject:@([x integerValue])];
+        }
+        NSLog(@"[Pollinations] grounded matches=%@ found=%d reply='%@'",
+              [nums componentsJoinedByString:@","], found, reply);
+        if (completion) completion(nums, reply, found, nil);
+    });
 }
 
 @end

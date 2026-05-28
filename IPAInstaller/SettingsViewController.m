@@ -7,20 +7,24 @@
 #import "Localization.h"
 #import "UpdateChecker.h"
 #import "UpdateNotesViewController.h"
+#import "DeviceInfo.h"
 #include <spawn.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 extern char **environ;
 
+static inline BOOL kSetIsIPad(void) { return UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad; }
+
 typedef NS_ENUM(NSInteger, SettingsSection) {
     SectionLanguage = 0,
-    SectionUpdates  = 1,  // v1.2 build 13 — in-app updater
-    SectionDownload = 2,  // v1.2 build 9 — parallel-streams picker
-    SectionArchive  = 3,  // archive.org S3 credentials (optional, can help with throttling)
-    SectionDiag     = 4,  // HTTPS test + ipainstaller spawn test
-    SectionCache    = 5,
-    SectionAbout    = 6,
+    SectionDisplay  = 1,  // v1.4 — grid density slider (iPad only)
+    SectionUpdates  = 2,  // v1.2 build 13 — in-app updater
+    SectionDownload = 3,  // v1.2 build 9 — parallel-streams picker
+    SectionArchive  = 4,  // archive.org S3 credentials (optional, can help with throttling)
+    SectionDiag     = 5,  // HTTPS test + ipainstaller spawn test
+    SectionCache    = 6,
+    SectionAbout    = 7,
     SectionsCount
 };
 
@@ -36,6 +40,10 @@ static NSString * const kPrefParallelStreams = @"IPAInstall.ParallelStreams";
 // ipainstaller is broken there.
 static NSString * const kPrefDownloadFolder = @"IPAInstall.DownloadFolder";
 static NSString * const kPrefKeepIPA        = @"IPAInstall.KeepIPAAfterInstall";
+// v1.4: iPad grid density (0…1) for Catalogue + Recherche tiles. Read by
+// +[AppRowCell tilesPerRowForWidth:]. Higher = more, smaller tiles.
+static NSString * const kPrefGridDensity    = @"IPAInstall.GridDensity";
+NSString * const kAppDropGridDensityChangedNotification = @"AppDropGridDensityChanged";
 // SectionLLM removed: chat AI is now Pollinations LLM (no API keys needed).
 
 // NSUserDefaults keys for archive.org S3 credentials. The secret is technically a
@@ -106,17 +114,19 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)s {
     if (s == SectionLanguage) return 1;
+    if (s == SectionDisplay) return kSetIsIPad() ? 1 : 0;  // density slider — iPad only
     if (s == SectionUpdates) return 2;   // installed version + latest release
     if (s == SectionDownload) return 3;  // parallel streams + folder + keep-ipa
     if (s == SectionArchive) return 3;   // email + access key + secret key
     if (s == SectionDiag) return 2;
     if (s == SectionCache) return 1;
-    if (s == SectionAbout) return 6;
+    if (s == SectionAbout) return 8;  // + exact model, chip, RAM
     return 0;
 }
 
 - (NSString *)tableView:(UITableView *)tv titleForHeaderInSection:(NSInteger)s {
     if (s == SectionLanguage) return T(@"settings.language");
+    if (s == SectionDisplay) return kSetIsIPad() ? T(@"settings.section_display") : nil;
     if (s == SectionUpdates) return T(@"settings.section_updates");
     if (s == SectionDownload) return T(@"settings.section_download");
     if (s == SectionArchive) return T(@"settings.section_archive");
@@ -127,6 +137,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 }
 
 - (NSString *)tableView:(UITableView *)tv titleForFooterInSection:(NSInteger)s {
+    if (s == SectionDisplay) return kSetIsIPad() ? T(@"settings.section_display_footer") : nil;
     if (s == SectionUpdates) return [self updatesSectionFooter];
     if (s == SectionDownload) return T(@"settings.section_download_footer");
     if (s == SectionArchive) return T(@"settings.section_archive_footer");
@@ -160,6 +171,23 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
                                           [Localization displayNameForLanguageCode:[Localization currentLanguageCode]]];
         }
         cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+    } else if (ip.section == SectionDisplay && kSetIsIPad()) {
+        // Grid density slider (iPad ONLY — never built on iPhone/iPod). Right = denser
+        // = more (smaller) tiles. Drives
+        // +[AppRowCell tilesPerRowForWidth:] for both Catalogue and Recherche.
+        cell.textLabel.text = T(@"settings.grid_density");
+        cell.textLabel.textColor = [UIColor blackColor];
+        cell.textLabel.font = [UIFont systemFontOfSize:14];
+        cell.selectionStyle = UITableViewCellSelectionStyleNone;
+        UISlider *sl = [[UISlider alloc] initWithFrame:CGRectMake(0, 0, 220, 30)];
+        sl.minimumValue = 0.0;
+        sl.maximumValue = 1.0;
+        NSUserDefaults *def = [NSUserDefaults standardUserDefaults];
+        sl.value = ([def objectForKey:kPrefGridDensity] != nil)
+            ? [def floatForKey:kPrefGridDensity] : 0.55f;
+        [sl addTarget:self action:@selector(gridDensityChanged:)
+            forControlEvents:UIControlEventValueChanged];
+        cell.accessoryView = sl;
     } else if (ip.section == SectionUpdates) {
         cell.textLabel.textColor = [UIColor blackColor];
         cell.textLabel.font = [UIFont systemFontOfSize:14];
@@ -300,7 +328,19 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
                 break;
             case 5:
                 cell.textLabel.text = T(@"settings.about_device_model");
-                cell.detailTextLabel.text = d.model ?: @"?";
+                // Exact model from our hardware table (e.g. "iPad mini 2 (iPad4,4)").
+                cell.detailTextLabel.text = [DeviceInfo isKnown]
+                    ? [NSString stringWithFormat:@"%@ (%@)",
+                         [DeviceInfo modelName], [DeviceInfo hardwareIdentifier]]
+                    : [DeviceInfo hardwareIdentifier];
+                break;
+            case 6:
+                cell.textLabel.text = T(@"settings.about_chip");
+                cell.detailTextLabel.text = [DeviceInfo chip];
+                break;
+            case 7:
+                cell.textLabel.text = T(@"settings.about_ram");
+                cell.detailTextLabel.text = [DeviceInfo ram];
                 break;
         }
     }
@@ -667,6 +707,15 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 - (void)keepIPAToggled:(UISwitch *)sw {
     [[NSUserDefaults standardUserDefaults] setBool:sw.on forKey:kPrefKeepIPA];
     [[NSUserDefaults standardUserDefaults] synchronize];
+}
+
+// v1.4: grid density slider (iPad). Persists + notifies Catalogue/Recherche to
+// re-lay-out their tile grids live.
+- (void)gridDensityChanged:(UISlider *)sl {
+    [[NSUserDefaults standardUserDefaults] setFloat:sl.value forKey:kPrefGridDensity];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    [[NSNotificationCenter defaultCenter]
+        postNotificationName:kAppDropGridDensityChangedNotification object:nil];
 }
 
 #pragma mark - Parallel-streams picker (v1.2 build 9)

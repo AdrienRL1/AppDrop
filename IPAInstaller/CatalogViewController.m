@@ -57,6 +57,11 @@ static inline BOOL kIsIPad(void) {
     self.title = T(@"catalog.title");
     self.view.backgroundColor = [IOS6Theme contentBackgroundColor];  // App Store white
 
+    // v1.4: re-lay-out the tile grid when the Settings density slider changes.
+    [[NSNotificationCenter defaultCenter] addObserver:self
+        selector:@selector(gridDensityDidChange)
+            name:@"AppDropGridDensityChanged" object:nil];
+
     self.filter = [CatalogFilter load_];
     self.results = [NSMutableArray array];
     self.selectedAppsByPk = [NSMutableDictionary dictionary];
@@ -396,9 +401,15 @@ static inline BOOL kIsIPad(void) {
 #pragma mark - Table
 
 - (NSInteger)tilesPerRowForWidth:(CGFloat)w {
-    if (!kIsIPad()) return 1;
-    NSInteger n = MAX(2, (NSInteger)(w / 175));
-    return MIN(n, 6);
+    return [AppRowCell tilesPerRowForWidth:w];   // shared, density-driven (Settings slider)
+}
+
+- (void)gridDensityDidChange {
+    [self.tableView reloadData];   // new column count from the density pref
+}
+
+- (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 - (NSInteger)tableView:(UITableView *)tv numberOfRowsInSection:(NSInteger)s {

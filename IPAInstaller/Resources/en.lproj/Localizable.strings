@@ -69,6 +69,11 @@
 "settings.about_min_ios" = "App min iOS";
 "settings.about_device_ios" = "Device iOS";
 "settings.about_device_model" = "Device model";
+"settings.section_display" = "Display";
+"settings.grid_density" = "Apps per row";
+"settings.section_display_footer" = "Slide to show more or fewer apps per row in the catalogue and search.";
+"settings.about_chip" = "Chip";
+"settings.about_ram" = "Memory (RAM)";
 "settings.language" = "Language";
 "settings.language_auto" = "Automatic (system)";
 
@@ -83,6 +88,10 @@
 "filter.sort_label" = "sort: %@";
 
 "chat.found_apps" = "I found %lu apps matching your search.";
+"chat.not_found" = "I couldn't find that app in the catalogue.";
+"chat.found_named" = "Here's what I found: %@.";
+"chat.device_answer" = "Your device: %@.";
+"chat.search_results_neutral" = "Here are some catalogue results that might match:";
 
 "chat.llm_error" = "AI service unavailable. Check your network and try again.";
 

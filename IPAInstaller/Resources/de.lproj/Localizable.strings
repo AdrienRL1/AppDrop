@@ -63,6 +63,11 @@
 "settings.about_min_ios" = "App min. iOS";
 "settings.about_device_ios" = "Geräte-iOS";
 "settings.about_device_model" = "Gerätemodell";
+"settings.section_display" = "Anzeige";
+"settings.grid_density" = "Apps pro Zeile";
+"settings.section_display_footer" = "Schiebe, um mehr oder weniger Apps pro Zeile im Katalog und in der Suche anzuzeigen.";
+"settings.about_chip" = "Chip";
+"settings.about_ram" = "Arbeitsspeicher (RAM)";
 "settings.language" = "Sprache";
 "settings.language_auto" = "Automatisch (System)";
 
@@ -75,6 +80,10 @@
 "filter.sort_label" = "Sortierung: %@";
 
 "chat.found_apps" = "Ich habe %lu passende Apps gefunden.";
+"chat.not_found" = "Diese App habe ich im Katalog nicht gefunden.";
+"chat.found_named" = "Das habe ich gefunden: %@.";
+"chat.device_answer" = "Dein Gerät: %@.";
+"chat.search_results_neutral" = "Hier sind Katalog-Ergebnisse, die passen könnten:";
 
 "chat.llm_error" = "KI-Dienst nicht verfügbar. Überprüfen Sie Ihre Netzwerkverbindung und versuchen Sie es erneut.";
 

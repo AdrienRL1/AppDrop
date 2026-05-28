@@ -40,4 +40,25 @@
                        completion:(void (^)(NSArray *titles, NSArray *keywords,
                                               NSString *replyText, NSError *err))completion;
 
+// v1.4 GROUNDING STEP — the key anti-hallucination pass.
+//
+// After we've searched the catalog and have a list of apps that ACTUALLY EXIST,
+// we hand that numbered list back to the model and ask it to pick ONLY the ones
+// that genuinely match the user's description, and to write its reply referencing
+// only those. The model selects by number, so it physically cannot invent an app
+// that isn't in the catalog. If nothing matches it must say so honestly.
+//
+// candidateLines — array of NSString, each "N. Title — vX — devices — iOS Y+ — size"
+// (The user's exact device + iOS is injected automatically into every call's system
+//  prompt, so the model already knows the hardware here.)
+// completion (main queue):
+//   matchNumbers — array of NSNumber, the 1-based indices the model chose (may be empty)
+//   reply        — grounded reply in the user's language
+//   found        — NO when nothing in the list matches (caller shows an honest empty state)
+//   err          — non-nil on transport/parse failure (caller falls back gracefully)
+- (void)selectMatchingCandidates:(NSArray *)candidateLines
+                         userText:(NSString *)userText
+                       completion:(void (^)(NSArray *matchNumbers, NSString *reply,
+                                              BOOL found, NSError *err))completion;
+
 @end

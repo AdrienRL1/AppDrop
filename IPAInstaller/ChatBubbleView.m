@@ -10,8 +10,33 @@
         self.opaque = NO;
         self.backgroundColor = [UIColor clearColor];
         self.contentMode = UIViewContentModeRedraw;
+        // v1.4: long-press a bubble to copy its text (iMessage-style "Copier" menu).
+        self.userInteractionEnabled = YES;
+        UILongPressGestureRecognizer *lp = [[UILongPressGestureRecognizer alloc]
+            initWithTarget:self action:@selector(handleLongPress:)];
+        [self addGestureRecognizer:lp];
     }
     return self;
+}
+
+#pragma mark - Copy (long-press → "Copier")
+
+- (BOOL)canBecomeFirstResponder { return YES; }
+
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    return (action == @selector(copy:));
+}
+
+- (void)copy:(id)sender {
+    [UIPasteboard generalPasteboard].string = self.messageText ?: @"";
+}
+
+- (void)handleLongPress:(UILongPressGestureRecognizer *)gr {
+    if (gr.state != UIGestureRecognizerStateBegan || !self.messageText.length) return;
+    [self becomeFirstResponder];
+    UIMenuController *mc = [UIMenuController sharedMenuController];
+    [mc setTargetRect:self.bounds inView:self];
+    [mc setMenuVisible:YES animated:YES];
 }
 
 - (void)setIsUser:(BOOL)isUser {

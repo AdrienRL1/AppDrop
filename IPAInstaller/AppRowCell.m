@@ -8,6 +8,18 @@
 
 @implementation AppRowCell
 
++ (NSInteger)tilesPerRowForWidth:(CGFloat)w {
+    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad) return 1;
+    NSUserDefaults *d = [NSUserDefaults standardUserDefaults];
+    double density = ([d objectForKey:@"IPAInstall.GridDensity"] != nil)
+        ? [d doubleForKey:@"IPAInstall.GridDensity"] : 0.55;  // default ≈ 175 pt tiles
+    if (density < 0) density = 0;
+    if (density > 1) density = 1;
+    CGFloat tileW = 230.0 - density * 100.0;   // dense(1)=130 pt … sparse(0)=230 pt
+    NSInteger n = MAX(2, (NSInteger)(w / tileW));
+    return MIN(n, 8);
+}
+
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     if ((self = [super initWithStyle:UITableViewCellStyleDefault reuseIdentifier:reuseIdentifier])) {
         self.selectionStyle = UITableViewCellSelectionStyleNone;
