@@ -289,9 +289,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
                 break;
             case 3:
                 cell.textLabel.text = T(@"settings.about_min_ios");
-                // v1.3.2: iOS 5 support was dropped in v2.0.22 (armv7 binary
-                // requires ≥ 6.0). The "5.0 (armv7)" string was stale.
-                cell.detailTextLabel.text = @"6.0 (armv7)";
+                cell.detailTextLabel.text = @"5.0 (armv7)";
                 break;
             case 4:
                 cell.textLabel.text = T(@"settings.about_device_ios");

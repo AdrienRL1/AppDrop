@@ -32,48 +32,37 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
 
 // ---- Backgrounds ----
 
-// v1.3.2: every skeuomorphic asset returns nil on iOS 7+ so callers fall back
-// to the system flat defaults (white nav bar, light tab bar, plain cells, etc.)
-// without per-callsite useFlatStyle branching. This centralises the gating —
-// one switch, full coverage.
-
 + (UIImage *)navBarBackground {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"navbar-blue", 1, 0);
     return img;
 }
 
 + (UIImage *)tabBarBackground {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"tabbar-dark", 1, 0);
     return img;
 }
 
 + (UIImage *)cellBackground {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"cell-bg", 1, 1);
     return img;
 }
 
 + (UIImage *)cellSelectedBackground {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"cell-selected", 1, 1);
     return img;
 }
 
 + (UIImage *)cardBackground {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"card-bg", 14, 14);  // 12px corner radius + 2px slack
     return img;
 }
 
 + (UIImage *)linenPattern {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = [UIImage imageNamed:@"linen"];
     return img;
@@ -84,10 +73,6 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
 }
 
 + (UIColor *)linenPatternColor {
-    // iOS 7+: callers expect a SOLID UIColor (set as view.backgroundColor or
-    // tableView.backgroundColor). Return the flat grouped-table gray so the
-    // jobs/versions screens look native instead of stamped cream linen.
-    if ([self useFlatStyle]) return [self groupedBackgroundColor];
     static UIColor *c = nil;
     if (!c && [self linenPattern]) c = [UIColor colorWithPatternImage:[self linenPattern]];
     if (!c) c = [self groupedBackgroundColor];
@@ -115,28 +100,24 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
 // ---- Buttons ----
 
 + (UIImage *)blueButtonNormal {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"btn-blue", 12, 12);
     return img;
 }
 
 + (UIImage *)blueButtonPressed {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"btn-blue-pressed", 12, 12);
     return img;
 }
 
 + (UIImage *)grayButtonNormal {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"btn-gray", 12, 12);
     return img;
 }
 
 + (UIImage *)grayButtonPressed {
-    if ([self useFlatStyle]) return nil;
     static UIImage *img = nil;
     if (!img) img = stretchable(@"btn-gray-pressed", 12, 12);
     return img;
@@ -175,20 +156,6 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
 
 + (void)styleButton:(UIButton *)button {
     if (!button) return;
-    if ([self useFlatStyle]) {
-        // iOS 7+: flat blue pill with rounded corners, white title, no shadow.
-        // CALayer cornerRadius is iOS 3.2+ so safe on every device we ship to.
-        button.backgroundColor = [self primaryBlue];
-        button.layer.cornerRadius = 6.0;
-        button.layer.masksToBounds = YES;
-        [button setBackgroundImage:nil forState:UIControlStateNormal];
-        [button setBackgroundImage:nil forState:UIControlStateHighlighted];
-        [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
-        [button setTitleColor:[UIColor colorWithWhite:1 alpha:0.6] forState:UIControlStateDisabled];
-        button.titleLabel.shadowColor = nil;
-        button.titleLabel.font = [UIFont boldSystemFontOfSize:15];
-        return;
-    }
     [button setBackgroundImage:[self blueButtonNormal] forState:UIControlStateNormal];
     [button setBackgroundImage:[self blueButtonPressed] forState:UIControlStateHighlighted];
     [button setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
@@ -200,19 +167,6 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
 
 + (void)styleGrayButton:(UIButton *)button {
     if (!button) return;
-    if ([self useFlatStyle]) {
-        // iOS 7+: light pill, dark text, no shadow.
-        button.backgroundColor = [UIColor colorWithWhite:0.93 alpha:1.0];
-        button.layer.cornerRadius = 6.0;
-        button.layer.masksToBounds = YES;
-        [button setBackgroundImage:nil forState:UIControlStateNormal];
-        [button setBackgroundImage:nil forState:UIControlStateHighlighted];
-        [button setTitleColor:[self labelDark] forState:UIControlStateNormal];
-        [button setTitleColor:[UIColor grayColor] forState:UIControlStateDisabled];
-        button.titleLabel.shadowColor = nil;
-        button.titleLabel.font = [UIFont boldSystemFontOfSize:14];
-        return;
-    }
     [button setBackgroundImage:[self grayButtonNormal] forState:UIControlStateNormal];
     [button setBackgroundImage:[self grayButtonPressed] forState:UIControlStateHighlighted];
     [button setTitleColor:[self labelDark] forState:UIControlStateNormal];
@@ -223,23 +177,8 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
 }
 
 + (void)styleSmallInstallButton:(UIButton *)button {
-    // App Store iOS 6 small install pill: gray rounded with blue text, becomes solid blue on tap.
-    // iOS 7+: bordered pill with blue text/border, inverts on tap.
+    // App Store iOS 6 small install pill: gray rounded with blue text, becomes solid blue on tap
     if (!button) return;
-    if ([self useFlatStyle]) {
-        button.backgroundColor = [UIColor clearColor];
-        button.layer.cornerRadius = 4.0;
-        button.layer.borderWidth = 1.0;
-        button.layer.borderColor = [self primaryBlue].CGColor;
-        button.layer.masksToBounds = YES;
-        [button setBackgroundImage:nil forState:UIControlStateNormal];
-        [button setBackgroundImage:nil forState:UIControlStateHighlighted];
-        [button setTitleColor:[self primaryBlue] forState:UIControlStateNormal];
-        [button setTitleColor:[UIColor whiteColor] forState:UIControlStateHighlighted];
-        button.titleLabel.font = [UIFont boldSystemFontOfSize:13];
-        button.titleLabel.shadowColor = nil;
-        return;
-    }
     [button setBackgroundImage:[self grayButtonNormal] forState:UIControlStateNormal];
     [button setBackgroundImage:[self blueButtonPressed] forState:UIControlStateHighlighted];
     [button setTitleColor:[self primaryBlue] forState:UIControlStateNormal];
@@ -358,18 +297,7 @@ static UIImage *stretchable(NSString *name, NSInteger leftCap, NSInteger topCap)
     CGPathAddArc(path, NULL, bodyLeft + radius, top + radius, radius, M_PI, M_PI + M_PI_2, NO);
     CGPathCloseSubpath(path);
 
-    // iOS 7+: flat fill, no gradient, no gloss highlight, no border. Matches
-    // the iOS 7+ Messages bubble look (single solid color tinted by isUser).
-    if ([self useFlatStyle]) {
-        UIColor *fill = isUser ? [self bubbleBlueColor] : [self bubbleGrayColor];
-        CGContextSetFillColorWithColor(ctx, fill.CGColor);
-        CGContextAddPath(ctx, path);
-        CGContextFillPath(ctx);
-        CGPathRelease(path);
-        return;
-    }
-
-    // iOS 6: vertical gradient + glossy highlight overlay
+    // Fill with vertical gradient — gives iOS 6 glossy look
     CGContextSaveGState(ctx);
     CGContextAddPath(ctx, path);
     CGContextClip(ctx);

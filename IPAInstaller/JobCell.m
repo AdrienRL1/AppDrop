@@ -1,6 +1,5 @@
 #import "JobCell.h"
 #import "InstallManager.h"
-#import "IOS6Theme.h"
 
 @interface JobCell ()
 @property (nonatomic, strong) UILabel *nameLabel;
@@ -21,13 +20,9 @@
         _nameLabel.numberOfLines = 1;
         _nameLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
         _nameLabel.backgroundColor = [UIColor clearColor];
-        // iOS 6 etched text effect (1px white shadow below). Skipped on iOS 7+
-        // where the flat language doesn't use text shadows — the etched look
-        // makes the title appear bumpy and dated on iOS 7+.
-        if (![IOS6Theme useFlatStyle]) {
-            _nameLabel.shadowColor = [UIColor colorWithWhite:1.0 alpha:0.5];
-            _nameLabel.shadowOffset = CGSizeMake(0, 1);
-        }
+        // iOS 6 etched text effect (1px white shadow below)
+        _nameLabel.shadowColor = [UIColor colorWithWhite:1.0 alpha:0.5];
+        _nameLabel.shadowOffset = CGSizeMake(0, 1);
         [self.contentView addSubview:_nameLabel];
 
         _messageLabel = [[UILabel alloc] init];
@@ -36,10 +31,8 @@
         _messageLabel.numberOfLines = 2;
         _messageLabel.lineBreakMode = NSLineBreakByTruncatingTail;
         _messageLabel.backgroundColor = [UIColor clearColor];
-        if (![IOS6Theme useFlatStyle]) {
-            _messageLabel.shadowColor = [UIColor colorWithWhite:1.0 alpha:0.4];
-            _messageLabel.shadowOffset = CGSizeMake(0, 1);
-        }
+        _messageLabel.shadowColor = [UIColor colorWithWhite:1.0 alpha:0.4];
+        _messageLabel.shadowOffset = CGSizeMake(0, 1);
         [self.contentView addSubview:_messageLabel];
 
         _progressBar = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleBar];

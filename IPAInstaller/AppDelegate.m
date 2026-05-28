@@ -9,20 +9,6 @@
 #import "Localization.h"
 #import "UpdateChecker.h"
 
-// v1.3.2: load a tab-bar icon as a system-tinted template on iOS 7+ so the
-// system flat-renders it in primaryBlue (selected) / gray (deselected), the
-// way native iOS 7+ tab bars look. On iOS 6, keep the baked-color PNG since
-// templates aren't supported (imageWithRenderingMode: is iOS 7+) and the
-// custom icons fit the skeuomorphic dark tab bar anyway.
-static UIImage *AppDropTabIcon(NSString *name) {
-    UIImage *img = [UIImage imageNamed:name];
-    if ([IOS6Theme useFlatStyle]
-        && [img respondsToSelector:@selector(imageWithRenderingMode:)]) {
-        return [img imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    }
-    return img;
-}
-
 // v1.3.1: alert delegate so the AppDelegate can react to the Filza-launch
 // confirmation. The dismissed-path is stored on the alert itself (via tag
 // + an associated property) so we can fire filza://view/<path> at the right
@@ -43,31 +29,31 @@ static UIImage *AppDropTabIcon(NSString *name) {
     CatalogViewController *catalog = [[CatalogViewController alloc] init];
     UINavigationController *catalogNav = [[UINavigationController alloc] initWithRootViewController:catalog];
     catalogNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.catalog")
-                                                            image:AppDropTabIcon(@"tab-catalog")
+                                                            image:[UIImage imageNamed:@"tab-catalog"]
                                                               tag:0];
 
     SearchViewController *search = [[SearchViewController alloc] init];
     UINavigationController *searchNav = [[UINavigationController alloc] initWithRootViewController:search];
     searchNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.search")
-                                                          image:AppDropTabIcon(@"tab-search")
+                                                          image:[UIImage imageNamed:@"tab-search"]
                                                             tag:1];
 
     ChatViewController *chat = [[ChatViewController alloc] init];
     UINavigationController *chatNav = [[UINavigationController alloc] initWithRootViewController:chat];
     chatNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.ai")
-                                                       image:AppDropTabIcon(@"tab-ai")
+                                                       image:[UIImage imageNamed:@"tab-ai"]
                                                          tag:2];
 
     RootViewController *install = [[RootViewController alloc] init];  // legacy URL/jobs screen
     UINavigationController *installNav = [[UINavigationController alloc] initWithRootViewController:install];
     installNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.install")
-                                                          image:AppDropTabIcon(@"tab-install")
+                                                          image:[UIImage imageNamed:@"tab-install"]
                                                             tag:3];
 
     SettingsViewController *settings = [[SettingsViewController alloc] init];
     UINavigationController *settingsNav = [[UINavigationController alloc] initWithRootViewController:settings];
     settingsNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.settings")
-                                                           image:AppDropTabIcon(@"tab-settings")
+                                                           image:[UIImage imageNamed:@"tab-settings"]
                                                              tag:4];
 
     UITabBarController *tabs = [[UITabBarController alloc] init];
