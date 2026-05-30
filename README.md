@@ -18,15 +18,10 @@
 
 ## Compatibility
 
-- **iOS 6.0 – 9.3.6** (armv7 / 32-bit) — fully supported and tested.
-- **iOS 10.x** — *confirmed working* on iOS 10.3.3 (iPad mini 2, reported by a Reddit user). `ipainstaller` is broken on iOS 10 (Apple-side `dyld` regression — silent failures), so AppDrop saves the `.ipa` to its `Documents/AppDrop/` folder instead and you install manually via Filza. From v1.3.1 onwards the save path is configurable, and a "Keep IPA after install" toggle on iOS 6-9 lets you archive a personal collection. Conflicts are auto-resolved with `(2)`, `(3)`, … suffixes instead of overwriting.
+- **iOS 5.0 – 10.x** (armv7 / 32-bit) — fully supported and tested on iPad 1 (iOS 5.1.1), iPad 4 (iOS 6.1.3), iPad mini 2 (iOS 10.3.3).
 - **iOS 11+** — not supported. The binary is 32-bit only and Apple dropped 32-bit app support in iOS 11.
-- Compatible devices: iPhone 4S, iPad 2 / 3 / 4 / iPad mini, iPod touch 5 (and 64-bit devices like iPad Air / iPhone 5S running iOS 10.3.3 or lower).
-- Requires a **jailbreak** with one of these helper packages installed from Cydia (iOS 6-9 only):
-  - `IPA Installer Console` (by autopear) — most common
-  - `appinst` (`ai.akemi.appinst`) — newer variant
-
-> 💡 If you can already install `.ipa` files on your device (manually or via your jailbreak's file manager — **iFile** on iOS 5–7, **Filza** on iOS 8+), you have everything you need.
+- Compatible devices: iPad 1, iPhone 3GS / 4 / 4S, iPad 2 / 3 / 4 / iPad mini, iPod touch 3 / 4 / 5 (and 64-bit devices like iPad Air / iPhone 5S running iOS 10.3.3 or lower).
+- Requires a **jailbreak** — that's it. Cydia handles the rest.
 
 ## Features
 
@@ -40,40 +35,45 @@
 
 ## Install
 
-### Quick path (5 minutes)
+> **From v1.5 onwards, AppDrop is distributed exclusively via Cydia.** No more manual IPA transfer, no SSH, no file manager. Cydia handles everything — including the two required dependencies (AppSync Unified, IPA Installer Console).
 
-1. **Verify the helper is installed.** Open **Cydia**, search for `IPA Installer Console`. If it doesn't say *Installed*, tap **Install**.
+### Add the AppDrop source
 
-2. **Download the IPA.** Grab the latest `AppDrop-v*.ipa` from the [Releases page](https://github.com/AdrienRL1/AppDrop/releases) on your computer.
-
-3. **Transfer the IPA to your device.** Pick whichever path you have set up:
-
-   - **SSH + `scp`** — most reliable, requires the `OpenSSH` package from Cydia. Default password on a freshly-jailbroken iOS 6+ device is `alpine` (change it!):
-     ```bash
-     scp AppDrop-vX.Y.ipa root@<device-ip>:/var/mobile/Documents/
-     ```
-   - **USB file manager from your computer** — [iMazing](https://imazing.com/), [iFunbox](https://www.i-funbox.com/), [3uTools](https://www.3u.com/) and similar tools let you browse the device's filesystem over USB and drop files in directly. Works on every supported iOS version.
-   - **Cloud storage app on the device** — Dropbox, Google Drive, Mega, etc. (available from the App Store on iOS 6+). Upload from your computer, download on the device, then open the `.ipa` in your jailbreak file manager (**iFile** on iOS 5–7, **Filza** on iOS 8+).
-   - **Email attachment** — mail yourself the `.ipa`, open the attachment on the device, "Open in…" → **iFile** (iOS 5–7) or **Filza** (iOS 8+).
-   - **AirDrop** — *iOS 8 + macOS Yosemite or later only*. Works on iPhone 5S / iPad Air / iPad mini 2 and newer running iOS 8 or 9. Not available on iOS 6 or iOS 7 (no Mac ↔ iOS AirDrop in those versions).
-   - **iCloud Drive** — *iOS 8+ only*, same caveat as AirDrop.
-
-4. **Install it.** Tap the file in your file manager (iFile / Filza) → choose **Installer** / *Install*. Or via SSH:
-   ```bash
-   ssh root@<device-ip>
-   ipainstaller /var/mobile/Documents/AppDrop-v1.0.ipa
+1. Open **Cydia** (or **Sileo / Zebra / Saily**) on your jailbroken device
+2. Go to **Sources → Edit → Add**
+3. Enter this URL:
    ```
+   https://adrienrl1.github.io/cydia/
+   ```
+4. Tap **Add Source** — Cydia refreshes the source list. The repo is named **AdrienRL**.
 
-5. **Done.** AppDrop appears on the home screen with rounded corners and the iOS 6 gloss reflection.
+### Install AppDrop
+
+5. From the AdrienRL source, tap **AppDrop**
+6. Tap **Install** → **Confirm**
+
+Cydia automatically pulls and installs the two prerequisite packages if you don't have them already:
+- **AppSync Unified** by Karen — lets the system load unsigned IPAs
+- **IPA Installer Console** by autopear — the actual install tool AppDrop drives under the hood
+
+When the install finishes, AppDrop appears on your home screen. Tap it and you're done.
+
+### Older versions
+
+The AppDrop repo keeps every past release. From the package page, tap **Modify** → you can pick among **v1.4**, **v1.4-5**, **v1.5**, or the latest revision. Useful if a new release regresses something for your specific device.
+
+### Updates
+
+AppDrop's in-app updater checks GitHub Releases hourly and, when a new version is out, opens Cydia directly on the package page so you can tap **Upgrade** in one tap. No download flow inside the app.
 
 ### Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| Icon not visible after install | SSH in and run `su mobile -c uicache && killall -9 SpringBoard`, or just reboot the device. |
-| `ipainstaller: command not found` | Install `IPA Installer Console` from Cydia first (step 1). |
-| `Echec install : Operation not permitted` | Your jailbreak's sandbox blocks `posix_spawn` — known on some iOS 5 jailbreaks. iOS 6+ is fine. |
-| App crashes on launch | Make sure your iOS is **6.0 or newer**. Older iOS isn't supported. |
+| Cydia can't resolve **AppSync Unified** | Add Karen's repo: `https://cydia.akemi.ai/`, then refresh. |
+| Icon not visible after install | Reboot the device, or via SSH run `uicache -p /Applications/IPAInstaller.app && killall -9 SpringBoard`. |
+| App crashes on launch | Confirm your iOS is **5.0 or newer** (iOS 11+ is **not** supported). |
+| Dependencies marked as "broken" | Refresh all your sources, then try Install again. |
 
 ## Using AppDrop
 
