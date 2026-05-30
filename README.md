@@ -37,6 +37,14 @@
 
 > **From v1.5 onwards, AppDrop is distributed exclusively via Cydia.** No more manual IPA transfer, no SSH, no file manager. Cydia handles everything — including the two required dependencies (AppSync Unified, IPA Installer Console).
 
+### ⚠️ Already running AppDrop installed via IPA? Uninstall it first.
+
+If you previously installed AppDrop via the `.ipa` flow (from a v1.4-or-earlier GitHub release), **remove that copy before adding the Cydia source**:
+
+- On your home screen, **long-press the AppDrop icon** until it wiggles → tap the **×** → **Delete**
+
+Why: the IPA install lives at `/var/mobile/Containers/Bundle/Application/<UUID>/IPAInstaller.app/` while the Cydia install lives at `/Applications/IPAInstaller.app/`. If you leave the old one behind, you can end up with two icons or a confused SpringBoard. Your downloaded apps + settings stay in their own container — they're not lost when you delete the bundle.
+
 ### Add the AppDrop source
 
 1. Open **Cydia** on your jailbroken device
