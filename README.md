@@ -39,7 +39,7 @@
 
 ### Add the AppDrop source
 
-1. Open **Cydia** (or **Sileo / Zebra / Saily**) on your jailbroken device
+1. Open **Cydia** on your jailbroken device
 2. Go to **Sources → Edit → Add**
 3. Enter this URL:
    ```

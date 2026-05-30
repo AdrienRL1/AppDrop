@@ -93,9 +93,6 @@
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>cydia</string>
-		<string>sileo</string>
-		<string>zbra</string>
-		<string>saily</string>
 		<string>filza</string>
 		<string>ifile</string>
 	</array>

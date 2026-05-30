@@ -638,25 +638,17 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     [uc checkForUpdates:YES];
 }
 
-// AppDrop is now distributed exclusively via the AdrienRL Cydia repo, so the
-// in-app updater no longer downloads the IPA itself. Instead it deep-links into
-// whichever package manager the user has (Cydia, Sileo, Zebra, Saily) at the
-// AppDrop package page, where the user just taps Upgrade. Falls back to Safari
-// at the repo landing page if no scheme is registered.
+// AppDrop is distributed exclusively via the AdrienRL Cydia repo. AppDrop only
+// supports iOS 5-10 and Cydia is the only package manager that runs on those
+// versions (Sileo is iOS 11+, Zebra is iOS 9+, Saily is iOS 15+). So we just
+// try cydia:// directly; if it's missing for any reason, fall back to opening
+// the repo landing page in Safari.
 - (void)openCydiaForUpdate {
     UIApplication *app = [UIApplication sharedApplication];
-    NSArray *packageURLs = @[
-        @"cydia://package/ca.adrien.appdrop",
-        @"sileo://package/ca.adrien.appdrop",
-        @"zbra://package/ca.adrien.appdrop",
-        @"saily://package/ca.adrien.appdrop",
-    ];
-    for (NSString *s in packageURLs) {
-        NSURL *u = [NSURL URLWithString:s];
-        if ([app canOpenURL:u]) {
-            [app openURL:u];
-            return;
-        }
+    NSURL *cydiaURL = [NSURL URLWithString:@"cydia://package/ca.adrien.appdrop"];
+    if ([app canOpenURL:cydiaURL]) {
+        [app openURL:cydiaURL];
+        return;
     }
     [app openURL:[NSURL URLWithString:@"https://adrienrl1.github.io/cydia/"]];
 }
