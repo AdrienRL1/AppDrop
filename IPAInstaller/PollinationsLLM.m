@@ -1,4 +1,5 @@
 #import "PollinationsLLM.h"
+#import "CheckpointLog.h"
 #import "HTTPSClient.h"
 #import "DeviceInfo.h"
 
@@ -134,6 +135,9 @@ static void callLLMRaw(NSString *systemPrompt, NSString *userMsg, float temperat
     NSData *bodyData = [NSJSONSerialization dataWithJSONObject:payload options:0 error:&je];
     if (je) { cb(nil, je); return; }
 
+    CPLog([NSString stringWithFormat:@"[LLM] POST %@ body=%lu temp=%.2f",
+              kEndpoint, (unsigned long)bodyData.length, temperature]);
+    NSDate *t0 = [NSDate date];
     [HTTPSClient postURL:kEndpoint
                   headers:@{@"Content-Type": @"application/json",
                             @"Accept": @"application/json"}
@@ -141,6 +145,11 @@ static void callLLMRaw(NSString *systemPrompt, NSString *userMsg, float temperat
                   timeout:60   // free endpoint cold-starts can take 20-50s; 35s was
                                // killing slow-but-valid responses → "service unavailable"
                completion:^(NSData *resp, NSInteger code, NSError *err) {
+        NSTimeInterval dt = -[t0 timeIntervalSinceNow];
+        CPLog([NSString stringWithFormat:@"[LLM] reply after %.1fs  code=%ld  bytes=%lu  err=%@",
+                  dt, (long)code, (unsigned long)resp.length,
+                  err ? [NSString stringWithFormat:@"%@ (%ld)", err.localizedDescription, (long)err.code]
+                      : @"(nil)"]);
         if (err || code != 200 || !resp.length) {
             NSLog(@"[Pollinations] error: code=%ld err=%@", (long)code, err);
             cb(nil, err ?: [NSError errorWithDomain:@"Pollinations" code:code
