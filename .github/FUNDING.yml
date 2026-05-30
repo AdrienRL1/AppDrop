@@ -1,7 +1,0 @@
-# GitHub renders a "❤️ Sponsor" button at the top of the repo page when this
-# file is present. Clicking it goes straight to the URL listed under `custom`.
-#
-# PayPal isn't a built-in FUNDING.yml platform on GitHub — the supported list
-# is github/patreon/open_collective/ko_fi/liberapay/buy_me_a_coffee/etc. To
-# route donations to PayPal we use the `custom:` key with the PayPal.Me URL.
-custom: https://paypal.me/adrienrl1

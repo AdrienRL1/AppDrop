@@ -1,0 +1,17 @@
+Package: ca.adrien.appdrop
+Name: AppDrop
+Version: 1.4
+Architecture: iphoneos-arm
+Description: Browse, search and install vintage iOS apps (iOS 6-10 era) from the IPA Archive (157k apps). Grounded AI assistant, device-aware suggestions, multilingual.
+Homepage: https://github.com/AdrienRL1/AppDrop
+Depiction: https://github.com/AdrienRL1/AppDrop/releases/tag/v1.4
+Maintainer: Adrien
+Author: Adrien
+Section: Utilities
+Depends: firmware (>= 6.0), com.linusyang.appsync
+Tag: compatible_min::ios6.0
+Filename: ./debs/ca.adrien.appdrop_1.4_iphoneos-arm.deb
+Size: 8782136
+MD5sum: fa30d9ea99530b4c2296209938b94fe5
+SHA1: d301f42132ba618569631b5265b29d7524553ff7
+SHA256: c6ee4b95993324ffa03178462a436185b852179302a61437ad0c215c61965186
