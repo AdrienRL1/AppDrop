@@ -225,7 +225,7 @@
 "settings.checking" = "Checking…";
 "settings.tap_to_check" = "Tap to check";
 "settings.check_failed" = "Check failed — tap to retry";
-"settings.install_update_to" = "Install v%@ ↓";
+"settings.install_update_to" = "Update to v%@ via Cydia";
 "settings.install_update_title" = "Install update?";
 "settings.install_update_msg" = "Download and install AppDrop v%@ (released %@)? The download will run in the Install tab. The app will quit during the upgrade; re-launch from the home screen when done.";
 "settings.install_action" = "Install";
@@ -240,6 +240,9 @@
 /* ===== v1.2 build 14 — Update release-notes modal ===== */
 "update_notes.title" = "What's new";
 "update_notes.install" = "Install";
+"update_notes.open_in_cydia" = "Open Cydia";
+"update_notes.cydia_banner_title" = "Install via Cydia";
+"update_notes.cydia_banner_body" = "This update is available from the AdrienRL Cydia source. Tap Open Cydia at the top right to install.";
 "update_notes.header_with_date" = "v%@ — released %@";
 "update_notes.header_no_date" = "v%@";
 "update_notes.empty" = "No release notes provided for this version.";

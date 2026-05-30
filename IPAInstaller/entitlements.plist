@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- System "platform" app status. On iOS 5/6 jailbreaks this exempts the
+         binary from the user-app sandbox profile, restoring access to
+         /var/mobile/ paths and Mach IPC. v2.0.18 was the original add. -->
+    <key>platform-application</key>
+    <true/>
+
+    <!-- Debug attach + crash report inclusion. -->
+    <key>get-task-allow</key>
+    <true/>
+
+    <!-- Newer-iOS sandbox bypass entitlements. iOS 5 ignores unknown keys, so
+         these are harmless on the iPad 1 and helpful on later jailbreaks. -->
+    <key>com.apple.private.security.no-container</key>
+    <true/>
+    <key>com.apple.private.security.no-sandbox</key>
+    <true/>
+</dict>
+</plist>

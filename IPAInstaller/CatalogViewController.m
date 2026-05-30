@@ -338,19 +338,8 @@ static inline BOOL kIsIPad(void) {
     if (self.selectedAppsByPk.count == 0) return;
     NSArray *batch = [self.selectedAppsByPk.allValues copy];
 
-    // Show onboarding alert once if first install ever; otherwise fire immediately.
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:kOnboardingKey]) {
-        self.pendingBatchInstall = batch;
-        UIAlertView *a = [[UIAlertView alloc]
-            initWithTitle:T(@"onboarding.ipainstaller_title")
-                  message:T(@"onboarding.ipainstaller_msg")
-                 delegate:self
-        cancelButtonTitle:T(@"onboarding.ipainstaller_cancel")
-        otherButtonTitles:T(@"onboarding.ipainstaller_continue"), nil];
-        a.tag = 43;
-        [a show];
-        return;
-    }
+    // v1.5-10: ipainstaller is now a hard Depends in the .deb — Cydia enforces
+    // it at install time. Skip the in-app onboarding alert and go straight in.
     [self fireBatchInstall:batch];
 }
 

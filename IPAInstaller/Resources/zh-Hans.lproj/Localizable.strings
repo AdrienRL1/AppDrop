@@ -217,7 +217,7 @@
 "settings.checking" = "检查中…";
 "settings.tap_to_check" = "点按检查";
 "settings.check_failed" = "检查失败 — 点按重试";
-"settings.install_update_to" = "安装 v%@ ↓";
+"settings.install_update_to" = "通过 Cydia 更新到 v%@";
 "settings.install_update_title" = "安装更新？";
 "settings.install_update_msg" = "下载并安装 AppDrop v%@ (发布于 %@)？ 下载将在「安装」标签页中进行。更新期间应用会退出；完成后从主屏幕重新启动。";
 "settings.install_action" = "安装";
@@ -232,6 +232,9 @@
 /* ===== v1.2 build 14 — 更新发行说明弹窗 ===== */
 "update_notes.title" = "新功能";
 "update_notes.install" = "安装";
+"update_notes.open_in_cydia" = "打开 Cydia";
+"update_notes.cydia_banner_title" = "通过 Cydia 安装";
+"update_notes.cydia_banner_body" = "此更新可从 AdrienRL Cydia 源获取。点击右上角的「打开 Cydia」进行安装。";
 "update_notes.header_with_date" = "v%@ — 发布于 %@";
 "update_notes.header_no_date" = "v%@";
 "update_notes.empty" = "此版本未提供发行说明。";

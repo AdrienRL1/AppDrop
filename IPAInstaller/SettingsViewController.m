@@ -426,13 +426,10 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 }
 
 - (void)alertView:(UIAlertView *)alert clickedButtonAtIndex:(NSInteger)buttonIndex {
-    if (alert.tag == 101) {
-        // Install-update confirmation
-        if (buttonIndex != alert.cancelButtonIndex) {
-            [self installUpdateConfirmed];
-        }
-        return;
-    }
+    // alert.tag == 101 was the pre-v1.2-build-14 install-update confirmation
+    // alert. Since v1.2 build 14 the modal UpdateNotesViewController replaced
+    // it, and since v1.4-5 the install path hands off to Cydia entirely, so
+    // there's no UIAlertView at tag 101 anymore.
     if (alert.tag == 102) {
         // Custom download folder input (v1.3.1).
         if (buttonIndex == alert.cancelButtonIndex) return;
@@ -613,11 +610,11 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
 - (void)handleUpdatesRowTap {
     UpdateChecker *uc = [UpdateChecker shared];
     if (uc.status == UpdateCheckerStatusChecking) return;
-    if (uc.status == UpdateCheckerStatusAvailable && uc.latestIpaURL.length) {
-        // Present the release-notes modal (v1.2 build 14). It renders the
-        // GitHub release body as HTML and offers a Cancel/Install pair in
-        // the nav bar. Tapping Install fires installUpdateConfirmed via the
-        // handler block.
+    if (uc.status == UpdateCheckerStatusAvailable) {
+        // Present the release-notes modal. AppDrop is distributed via the
+        // AdrienRL Cydia source now, so the right-bar button reads
+        // "Open Cydia" and the handler deep-links into the package manager
+        // instead of starting an in-app download.
         UpdateNotesViewController *vc = [[UpdateNotesViewController alloc] init];
         vc.version = uc.latestVersion;
         vc.releaseDate = uc.latestReleaseDate;
@@ -625,7 +622,7 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
         __weak typeof(self) weakSelf = self;
         vc.installHandler = ^{
             __strong typeof(self) s = weakSelf;
-            if (s) [s installUpdateConfirmed];
+            if (s) [s openCydiaForUpdate];
         };
         UINavigationController *nav =
             [[UINavigationController alloc] initWithRootViewController:vc];
@@ -641,33 +638,27 @@ static NSString * const kPrefArchiveSecretKey = @"IPAInstall.ArchiveSecretKey";
     [uc checkForUpdates:YES];
 }
 
-// Continues UIAlertView dispatch already wired for archive credentials.
-// alert.tag 101 = "install update" confirmation.
-- (void)installUpdateConfirmed {
-    UpdateChecker *uc = [UpdateChecker shared];
-    NSString *url = uc.latestIpaURL;
-    if (!url.length) return;
-    [[InstallManager shared] startInstallWithURL:url
-                                       completion:^(NSString *jobId, NSError *err) {
-        if (err) {
-            UIAlertView *a = [[UIAlertView alloc]
-                initWithTitle:T(@"common.error")
-                      message:err.localizedDescription
-                     delegate:nil
-            cancelButtonTitle:T(@"common.ok")
-            otherButtonTitles:nil];
-            [a show];
+// AppDrop is now distributed exclusively via the AdrienRL Cydia repo, so the
+// in-app updater no longer downloads the IPA itself. Instead it deep-links into
+// whichever package manager the user has (Cydia, Sileo, Zebra, Saily) at the
+// AppDrop package page, where the user just taps Upgrade. Falls back to Safari
+// at the repo landing page if no scheme is registered.
+- (void)openCydiaForUpdate {
+    UIApplication *app = [UIApplication sharedApplication];
+    NSArray *packageURLs = @[
+        @"cydia://package/ca.adrien.appdrop",
+        @"sileo://package/ca.adrien.appdrop",
+        @"zbra://package/ca.adrien.appdrop",
+        @"saily://package/ca.adrien.appdrop",
+    ];
+    for (NSString *s in packageURLs) {
+        NSURL *u = [NSURL URLWithString:s];
+        if ([app canOpenURL:u]) {
+            [app openURL:u];
             return;
         }
-        // Tell the user where to watch progress.
-        UIAlertView *a = [[UIAlertView alloc]
-            initWithTitle:T(@"settings.update_started_title")
-                  message:T(@"settings.update_started_msg")
-                 delegate:nil
-        cancelButtonTitle:T(@"common.ok")
-        otherButtonTitles:nil];
-        [a show];
-    }];
+    }
+    [app openURL:[NSURL URLWithString:@"https://adrienrl1.github.io/cydia/"]];
 }
 
 #pragma mark - Download folder + keep-ipa toggle (v1.3.1)

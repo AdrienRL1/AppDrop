@@ -1,4 +1,5 @@
 #import "InstallManager.h"
+#import "CheckpointLog.h"
 #import "HTTPSClient.h"
 #import "ParallelDownloader.h"
 #import "Localization.h"
@@ -38,15 +39,24 @@ NSString *const InstallManagerJobSavedNotification     = @"InstallManagerJobSave
 
 - (instancetype)init {
     if ((self = [super init])) {
+        CPLog(@"  InstallManager.init: jobsById dict");
         _jobsById = [[NSMutableDictionary alloc] init];
-        [self loadJobsFromDisk];
-        [self sweepOrphanTempFiles];        // v2.0.28
-        [self sweepDocumentsAppDropFolder]; // v1.2: cap saved-for-Filza .ipas
+        CPLog(@"  InstallManager.init: loadJobsFromDisk");
+        @try { [self loadJobsFromDisk]; }
+        @catch (NSException *e) { CPLog([NSString stringWithFormat:@"  EXC in loadJobsFromDisk: %@ — %@", e.name, e.reason]); }
+        CPLog(@"  InstallManager.init: sweepOrphanTempFiles");
+        @try { [self sweepOrphanTempFiles]; }
+        @catch (NSException *e) { CPLog([NSString stringWithFormat:@"  EXC in sweepOrphanTempFiles: %@ — %@", e.name, e.reason]); }
+        CPLog(@"  InstallManager.init: sweepDocumentsAppDropFolder");
+        @try { [self sweepDocumentsAppDropFolder]; }
+        @catch (NSException *e) { CPLog([NSString stringWithFormat:@"  EXC in sweepDocumentsAppDropFolder: %@ — %@", e.name, e.reason]); }
+        CPLog(@"  InstallManager.init: pollTimer");
         _pollTimer = [NSTimer scheduledTimerWithTimeInterval:2.0
                                                       target:self
                                                     selector:@selector(pollAllActiveJobs)
                                                     userInfo:nil
                                                      repeats:YES];
+        CPLog(@"  InstallManager.init: notification observers");
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                   selector:@selector(saveJobsToDisk)
                                                       name:UIApplicationDidEnterBackgroundNotification
@@ -55,6 +65,7 @@ NSString *const InstallManagerJobSavedNotification     = @"InstallManagerJobSave
                                                   selector:@selector(saveJobsToDisk)
                                                       name:UIApplicationWillTerminateNotification
                                                     object:nil];
+        CPLog(@"  InstallManager.init: DONE");
     }
     return self;
 }

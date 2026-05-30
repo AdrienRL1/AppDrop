@@ -21,12 +21,15 @@
         [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                                                       target:self
                                                       action:@selector(cancelTapped)];
-    UIBarButtonItem *install =
-        [[UIBarButtonItem alloc] initWithTitle:T(@"update_notes.install")
+    // AppDrop is distributed via the AdrienRL Cydia source — this button
+    // hands off to whichever package manager the user has rather than
+    // starting an in-app download.
+    UIBarButtonItem *open =
+        [[UIBarButtonItem alloc] initWithTitle:T(@"update_notes.open_in_cydia")
                                           style:UIBarButtonItemStyleDone
                                          target:self
                                          action:@selector(installTapped)];
-    self.navigationItem.rightBarButtonItem = install;
+    self.navigationItem.rightBarButtonItem = open;
 
     // Header strip: "v1.3 — released May 30, 2026"
     self.headerLabel = [[UILabel alloc] init];
@@ -123,7 +126,20 @@
     [html appendString:@"strong,b{font-weight:600;}"];
     [html appendString:@"a{color:#137dd6;text-decoration:none;}"];
     [html appendString:@"em,i{font-style:italic;}"];
+    // Banner styling — light-blue callout above the release notes so the
+    // user understands the install path is Cydia, not in-app.
+    [html appendString:@".cydia-banner{margin:0 0 14px 0;padding:10px 12px;"
+                       @"background:#eef5ff;border:1px solid #d0e3ff;"
+                       @"border-radius:6px;font-size:13px;color:#13427a;}"];
+    [html appendString:@".cydia-banner b{color:#0a3266;}"];
     [html appendString:@"</style></head><body>"];
+
+    // Cydia banner — always shown, regardless of notes presence.
+    [html appendString:@"<div class=\"cydia-banner\"><b>"];
+    [html appendString:[self htmlEscape:T(@"update_notes.cydia_banner_title")]];
+    [html appendString:@"</b><br>"];
+    [html appendString:[self htmlEscape:T(@"update_notes.cydia_banner_body")]];
+    [html appendString:@"</div>"];
 
     if (!self.notesMarkdown.length) {
         [html appendString:@"<p><em>"];

@@ -217,7 +217,7 @@
 "settings.checking" = "確認中…";
 "settings.tap_to_check" = "タップして確認";
 "settings.check_failed" = "確認に失敗しました — タップして再試行";
-"settings.install_update_to" = "v%@ をインストール ↓";
+"settings.install_update_to" = "v%@ にアップデート (Cydia 経由)";
 "settings.install_update_title" = "アップデートをインストール？";
 "settings.install_update_msg" = "AppDrop v%@ (%@ 公開) をダウンロードしてインストールしますか？ ダウンロードはインストールタブで実行されます。アップデート中にアプリは終了します。完了後、ホーム画面から再起動してください。";
 "settings.install_action" = "インストール";
@@ -232,6 +232,9 @@
 /* ===== v1.2 build 14 — アップデートのリリースノートモーダル ===== */
 "update_notes.title" = "新機能";
 "update_notes.install" = "インストール";
+"update_notes.open_in_cydia" = "Cydia を開く";
+"update_notes.cydia_banner_title" = "Cydia 経由でインストール";
+"update_notes.cydia_banner_body" = "このアップデートは AdrienRL の Cydia ソースから入手できます。右上の Cydia を開く をタップしてインストールしてください。";
 "update_notes.header_with_date" = "v%@ — %@ にリリース";
 "update_notes.header_no_date" = "v%@";
 "update_notes.empty" = "このバージョンのリリースノートはありません。";

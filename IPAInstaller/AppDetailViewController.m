@@ -223,37 +223,10 @@
         [a show];
         return;
     }
-    // First-install onboarding: show a one-time alert reminding the user that ipainstaller
-    // is a prerequisite. Persisted in NSUserDefaults — only shown once per device install.
-    NSString *onboardingKey = @"IPAInstall.onboarding.ipainstaller.shown";
-    if (![[NSUserDefaults standardUserDefaults] boolForKey:onboardingKey]) {
-        UIAlertView *a = [[UIAlertView alloc] initWithTitle:T(@"onboarding.ipainstaller_title")
-                                                    message:T(@"onboarding.ipainstaller_msg")
-                                                   delegate:self
-                                          cancelButtonTitle:T(@"onboarding.ipainstaller_cancel")
-                                          otherButtonTitles:T(@"onboarding.ipainstaller_continue"), nil];
-        a.tag = 43;
-        [a show];
-        return;
-    }
-    // v2.0.9: the per-row filename-mismatch confirmation alert (tag 42) was removed.
-    // The catalog-quality reminder is now shown once per app launch by AppDelegate
-    // covering the same warning territory in a less in-your-face way.
+    // v1.5-10: ipainstaller is now a hard Depends in the .deb (Cydia enforces
+    // it at install time), so the in-app "do you have ipainstaller?" alert
+    // is redundant. Go straight to install.
     [self doInstall];
-}
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
-    if (alertView.tag == 43) {
-        // onboarding ipainstaller alert
-        if (buttonIndex != alertView.cancelButtonIndex) {
-            // user clicked "Yes, continue" → mark as shown and proceed to install
-            [[NSUserDefaults standardUserDefaults] setBool:YES
-                                                     forKey:@"IPAInstall.onboarding.ipainstaller.shown"];
-            [[NSUserDefaults standardUserDefaults] synchronize];
-            [self doInstall];
-        }
-        // "Not yet" → do nothing, alert will reappear next time user taps Install
-    }
 }
 
 - (void)doInstall {

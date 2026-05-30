@@ -1,0 +1,14 @@
+#!/bin/sh
+# After install/upgrade: force SpringBoard to (re)process the icon so the
+# new bake shows up without requiring a manual respring/reboot.
+set -e
+
+APP=/Applications/IPAInstaller.app
+
+if [ -x /usr/bin/uicache ]; then
+    /usr/bin/uicache -p "$APP" >/dev/null 2>&1 || true
+elif [ -x /var/jb/usr/bin/uicache ]; then
+    /var/jb/usr/bin/uicache -p "$APP" >/dev/null 2>&1 || true
+fi
+
+exit 0

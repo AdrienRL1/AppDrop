@@ -1,0 +1,12 @@
+#!/bin/sh
+# After removal/purge: tell SpringBoard the app is gone so the icon disappears
+# cleanly (otherwise a ghost tile can linger until respring).
+set -e
+
+if [ -x /usr/bin/uicache ]; then
+  /usr/bin/uicache -a >/dev/null 2>&1 || true
+elif [ -x /var/jb/usr/bin/uicache ]; then
+  /var/jb/usr/bin/uicache -a >/dev/null 2>&1 || true
+fi
+
+exit 0

@@ -225,7 +225,7 @@
 "settings.checking" = "Vérification…";
 "settings.tap_to_check" = "Touche pour vérifier";
 "settings.check_failed" = "Échec de la vérification — touche pour réessayer";
-"settings.install_update_to" = "Installer v%@ ↓";
+"settings.install_update_to" = "Mettre à jour vers v%@ via Cydia";
 "settings.install_update_title" = "Installer la mise à jour ?";
 "settings.install_update_msg" = "Télécharger et installer AppDrop v%@ (publiée le %@) ? Le téléchargement se déroulera dans l'onglet Installer. L'app va quitter pendant la mise à jour ; relance-la depuis l'écran d'accueil quand c'est fini.";
 "settings.install_action" = "Installer";
@@ -240,6 +240,9 @@
 /* ===== v1.2 build 14 — Modal notes de version pour mise à jour ===== */
 "update_notes.title" = "Nouveautés";
 "update_notes.install" = "Installer";
+"update_notes.open_in_cydia" = "Ouvrir Cydia";
+"update_notes.cydia_banner_title" = "Installation via Cydia";
+"update_notes.cydia_banner_body" = "Cette mise à jour est disponible depuis la source Cydia AdrienRL. Tape Ouvrir Cydia en haut à droite pour l'installer.";
 "update_notes.header_with_date" = "v%@ — publiée le %@";
 "update_notes.header_no_date" = "v%@";
 "update_notes.empty" = "Aucune note de version fournie pour cette version.";

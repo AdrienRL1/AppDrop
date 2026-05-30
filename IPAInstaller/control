@@ -1,9 +1,13 @@
-Package: ca.adrien.ipainstaller
-Name: IPA Install
-Version: 0.1.0
+Package: ca.adrien.appdrop
+Name: AppDrop
+Version: 1.5-10
 Architecture: iphoneos-arm
-Description: Direct IPA installer with parallel downloads (iOS 5+)
+Description: Browse, search and install vintage iOS apps (iOS 5-10 era) from the IPA Archive (157k apps). Grounded AI assistant, device-aware suggestions, multilingual.
+Homepage: https://github.com/AdrienRL1/AppDrop
+Depiction: https://github.com/AdrienRL1/AppDrop/releases/tag/v1.5
+Icon: https://adrienrl1.github.io/cydia/CydiaIcon.png
 Maintainer: Adrien
 Author: Adrien
 Section: Utilities
-Depends: firmware (>= 5.0)
+Depends: firmware (>= 5.0), net.angelxwind.appsyncunified | com.linusyang.appsync, com.autopear.installipa | ai.akemi.appinst
+Tag: compatible_min::ios5.0

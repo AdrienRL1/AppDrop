@@ -8,6 +8,7 @@
 #import "SettingsViewController.h"
 #import "Localization.h"
 #import "UpdateChecker.h"
+#import "CheckpointLog.h"
 
 // v1.3.1: alert delegate so the AppDelegate can react to the Filza-launch
 // confirmation. The dismissed-path is stored on the alert itself (via tag
@@ -20,47 +21,82 @@
 @implementation AppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    [self setupAppearance];
-    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
-    self.window.backgroundColor = [IOS6Theme contentBackgroundColor];
+    // v1.5 — checkpoint log so we can diagnose iOS 5 launch crashes after the
+    // fact via SSH (file at /var/mobile/Documents/appdrop-launch.log).
+    CPLogReset();
+    CPLog([NSString stringWithFormat:@"iOS %@ device=%@",
+              [[UIDevice currentDevice] systemVersion],
+              [[UIDevice currentDevice] model]]);
 
-    // Build the 4 tabs: Catalogue (default), IA, Installer, Réglages.
-    // Each tab has its own UINavigationController stack so push/pop works inside.
-    CatalogViewController *catalog = [[CatalogViewController alloc] init];
-    UINavigationController *catalogNav = [[UINavigationController alloc] initWithRootViewController:catalog];
-    catalogNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.catalog")
-                                                            image:[UIImage imageNamed:@"tab-catalog"]
-                                                              tag:0];
+    @try {
+        CPLog(@"setupAppearance");
+        [self setupAppearance];
 
-    SearchViewController *search = [[SearchViewController alloc] init];
-    UINavigationController *searchNav = [[UINavigationController alloc] initWithRootViewController:search];
-    searchNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.search")
-                                                          image:[UIImage imageNamed:@"tab-search"]
-                                                            tag:1];
+        CPLog(@"window alloc");
+        self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+        self.window.backgroundColor = [IOS6Theme contentBackgroundColor];
 
-    ChatViewController *chat = [[ChatViewController alloc] init];
-    UINavigationController *chatNav = [[UINavigationController alloc] initWithRootViewController:chat];
-    chatNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.ai")
-                                                       image:[UIImage imageNamed:@"tab-ai"]
-                                                         tag:2];
+        // Build the 4 tabs: Catalogue (default), IA, Installer, Réglages.
+        // Each tab has its own UINavigationController stack so push/pop works inside.
+        CPLog(@"alloc CatalogVC");
+        CatalogViewController *catalog = [[CatalogViewController alloc] init];
+        UINavigationController *catalogNav = [[UINavigationController alloc] initWithRootViewController:catalog];
+        catalogNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.catalog")
+                                                                image:[UIImage imageNamed:@"tab-catalog"]
+                                                                  tag:0];
 
-    RootViewController *install = [[RootViewController alloc] init];  // legacy URL/jobs screen
-    UINavigationController *installNav = [[UINavigationController alloc] initWithRootViewController:install];
-    installNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.install")
-                                                          image:[UIImage imageNamed:@"tab-install"]
-                                                            tag:3];
+        CPLog(@"alloc SearchVC");
+        SearchViewController *search = [[SearchViewController alloc] init];
+        UINavigationController *searchNav = [[UINavigationController alloc] initWithRootViewController:search];
+        searchNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.search")
+                                                              image:[UIImage imageNamed:@"tab-search"]
+                                                                tag:1];
 
-    SettingsViewController *settings = [[SettingsViewController alloc] init];
-    UINavigationController *settingsNav = [[UINavigationController alloc] initWithRootViewController:settings];
-    settingsNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.settings")
-                                                           image:[UIImage imageNamed:@"tab-settings"]
-                                                             tag:4];
+        CPLog(@"alloc ChatVC");
+        ChatViewController *chat = [[ChatViewController alloc] init];
+        UINavigationController *chatNav = [[UINavigationController alloc] initWithRootViewController:chat];
+        chatNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.ai")
+                                                           image:[UIImage imageNamed:@"tab-ai"]
+                                                             tag:2];
 
-    UITabBarController *tabs = [[UITabBarController alloc] init];
-    tabs.viewControllers = @[catalogNav, searchNav, chatNav, installNav, settingsNav];
-    tabs.selectedIndex = 0;  // Catalogue first (it's the main feature)
-    self.window.rootViewController = tabs;
-    [self.window makeKeyAndVisible];
+        CPLog(@"alloc RootVC");
+        RootViewController *install = [[RootViewController alloc] init];  // legacy URL/jobs screen
+        UINavigationController *installNav = [[UINavigationController alloc] initWithRootViewController:install];
+        installNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.install")
+                                                              image:[UIImage imageNamed:@"tab-install"]
+                                                                tag:3];
+
+        CPLog(@"alloc SettingsVC");
+        SettingsViewController *settings = [[SettingsViewController alloc] init];
+        UINavigationController *settingsNav = [[UINavigationController alloc] initWithRootViewController:settings];
+        settingsNav.tabBarItem = [[UITabBarItem alloc] initWithTitle:T(@"tab.settings")
+                                                               image:[UIImage imageNamed:@"tab-settings"]
+                                                                 tag:4];
+
+        CPLog(@"alloc TabBarController");
+        UITabBarController *tabs = [[UITabBarController alloc] init];
+        tabs.viewControllers = @[catalogNav, searchNav, chatNav, installNav, settingsNav];
+        tabs.selectedIndex = 0;  // Catalogue first (it's the main feature)
+        self.window.rootViewController = tabs;
+        CPLog(@"makeKeyAndVisible");
+        [self.window makeKeyAndVisible];
+    } @catch (NSException *e) {
+        CPLog([NSString stringWithFormat:@"EXCEPTION in setup: %@ — %@", e.name, e.reason]);
+        // Show a minimal error UI instead of crashing silently.
+        self.window = self.window ?: [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+        self.window.backgroundColor = [UIColor whiteColor];
+        UIViewController *errVC = [[UIViewController alloc] init];
+        errVC.view.backgroundColor = [UIColor whiteColor];
+        UILabel *l = [[UILabel alloc] initWithFrame:CGRectInset(errVC.view.bounds, 20, 80)];
+        l.numberOfLines = 0;
+        l.font = [UIFont systemFontOfSize:13];
+        l.text = [NSString stringWithFormat:@"AppDrop failed to launch.\n\n%@ — %@\n\nSee /tmp/appdrop-launch.log for details.",
+                  e.name, e.reason];
+        [errVC.view addSubview:l];
+        self.window.rootViewController = errVC;
+        [self.window makeKeyAndVisible];
+        return YES;
+    }
 
     NSURL *launchURL = launchOptions[UIApplicationLaunchOptionsURLKey];
     if (launchURL) {
